@@ -15,11 +15,13 @@ from __future__ import annotations
 
 import csv
 import json
+import time
 from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
 import torch
+from torch.utils.data import DataLoader, Dataset
 
 from evaluation.metrics import mrr_at_k, ndcg_at_k, recall_at_k
 from models.drt_model import DRTModel
@@ -27,6 +29,36 @@ from models.encoder import MiniLMEncoder
 
 
 TOP_K = 100
+
+
+class _TextDataset(Dataset):
+    """Trivial Dataset wrapper around a list of strings."""
+
+    def __init__(self, texts: list[str]):
+        self.texts = texts
+
+    def __len__(self) -> int:
+        return len(self.texts)
+
+    def __getitem__(self, idx: int) -> str:
+        return self.texts[idx]
+
+
+class _TextTokenizerCollator:
+    """Tokenizes a batch of strings on DataLoader worker processes."""
+
+    def __init__(self, tokenizer, max_seq_length: int):
+        self.tokenizer = tokenizer
+        self.max_seq_length = max_seq_length
+
+    def __call__(self, batch: list[str]):
+        return self.tokenizer(
+            batch,
+            padding=True,
+            truncation=True,
+            max_length=self.max_seq_length,
+            return_tensors="pt",
+        )
 
 
 def _load_jsonl(path: Path) -> list[tuple[str, str]]:
@@ -69,10 +101,11 @@ def _encode_corpus_baseline(
     encoder: MiniLMEncoder,
     corpus: list[tuple[str, str]],
     device: str,
-    chunk_size: int = 4096,
+    batch_size: int = 1024,
+    num_workers: int = 4,
     fp16: bool = True,
+    log_every_batches: int = 10,
 ) -> tuple[torch.Tensor, list[str]]:
-    import time as _time
     encoder.eval()
     pids = [pid for pid, _ in corpus]
     texts = [t for _, t in corpus]
@@ -82,24 +115,39 @@ def _encode_corpus_baseline(
         dtype=torch.float16 if fp16 else torch.float32,
         device="cpu",
     )
-    t0 = _time.time()
+
+    dataset = _TextDataset(texts)
+    collator = _TextTokenizerCollator(encoder.tokenizer, encoder.max_seq_length)
+    loader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        collate_fn=collator,
+        pin_memory=(device == "cuda"),
+        persistent_workers=(num_workers > 0),
+    )
+
+    t0 = time.time()
+    cursor = 0
     with torch.no_grad():
-        for s in range(0, n, chunk_size):
-            e = min(s + chunk_size, n)
-            tok = encoder.tokenize(texts[s:e])
+        for bi, tok in enumerate(loader):
+            bs = tok["input_ids"].shape[0]
             tok = {k: v.to(device, non_blocking=True) for k, v in tok.items()}
             with torch.cuda.amp.autocast(enabled=fp16 and device == "cuda", dtype=torch.float16):
                 emb = encoder(tok["input_ids"], tok["attention_mask"])
-            all_emb[s:e] = emb.detach().to(dtype=all_emb.dtype, device="cpu")
-            elapsed = _time.time() - t0
-            rate = e / elapsed if elapsed > 0 else 0.0
-            eta = (n - e) / rate if rate > 0 else float("inf")
-            print(
-                f"  baseline corpus {e:>9,}/{n:,} "
-                f"({100*e/n:5.1f}%) | {elapsed:6.0f}s | "
-                f"{rate:>5.0f} rows/s | ETA {eta:5.0f}s",
-                flush=True,
-            )
+            all_emb[cursor : cursor + bs] = emb.detach().to(dtype=all_emb.dtype, device="cpu")
+            cursor += bs
+            if (bi + 1) % log_every_batches == 0 or cursor >= n:
+                elapsed = time.time() - t0
+                rate = cursor / elapsed if elapsed > 0 else 0.0
+                eta = (n - cursor) / rate if rate > 0 else float("inf")
+                print(
+                    f"  baseline corpus {cursor:>9,}/{n:,} "
+                    f"({100 * cursor / n:5.1f}%) | {elapsed:6.0f}s | "
+                    f"{rate:>5.0f} rows/s | ETA {eta:5.0f}s",
+                    flush=True,
+                )
     return all_emb, pids
 
 
@@ -107,10 +155,11 @@ def _encode_corpus_drt(
     model: DRTModel,
     corpus: list[tuple[str, str]],
     device: str,
-    chunk_size: int = 4096,
+    batch_size: int = 1024,
+    num_workers: int = 4,
     fp16: bool = True,
+    log_every_batches: int = 10,
 ) -> tuple[torch.Tensor, list[str]]:
-    import time as _time
     model.eval()
     pids = [pid for pid, _ in corpus]
     texts = [t for _, t in corpus]
@@ -120,22 +169,42 @@ def _encode_corpus_drt(
         dtype=torch.float16 if fp16 else torch.float32,
         device="cpu",
     )
-    t0 = _time.time()
+
+    dataset = _TextDataset(texts)
+    collator = _TextTokenizerCollator(
+        model.encoder.tokenizer, model.encoder.max_seq_length
+    )
+    loader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        collate_fn=collator,
+        pin_memory=(device == "cuda"),
+        persistent_workers=(num_workers > 0),
+    )
+
+    t0 = time.time()
+    cursor = 0
     with torch.no_grad():
-        for s in range(0, n, chunk_size):
-            e = min(s + chunk_size, n)
+        for bi, tok in enumerate(loader):
+            bs = tok["input_ids"].shape[0]
+            tok = {k: v.to(device, non_blocking=True) for k, v in tok.items()}
             with torch.cuda.amp.autocast(enabled=fp16 and device == "cuda", dtype=torch.float16):
-                subs = model.encode_doc(texts[s:e], device)
-            all_subs[s:e] = subs.detach().to(dtype=all_subs.dtype, device="cpu")
-            elapsed = _time.time() - t0
-            rate = e / elapsed if elapsed > 0 else 0.0
-            eta = (n - e) / rate if rate > 0 else float("inf")
-            print(
-                f"  drt corpus      {e:>9,}/{n:,} "
-                f"({100*e/n:5.1f}%) | {elapsed:6.0f}s | "
-                f"{rate:>5.0f} rows/s | ETA {eta:5.0f}s",
-                flush=True,
-            )
+                emb = model.encoder(tok["input_ids"], tok["attention_mask"])
+                subs = model.decomposition(emb)
+            all_subs[cursor : cursor + bs] = subs.detach().to(dtype=all_subs.dtype, device="cpu")
+            cursor += bs
+            if (bi + 1) % log_every_batches == 0 or cursor >= n:
+                elapsed = time.time() - t0
+                rate = cursor / elapsed if elapsed > 0 else 0.0
+                eta = (n - cursor) / rate if rate > 0 else float("inf")
+                print(
+                    f"  drt corpus      {cursor:>9,}/{n:,} "
+                    f"({100 * cursor / n:5.1f}%) | {elapsed:6.0f}s | "
+                    f"{rate:>5.0f} rows/s | ETA {eta:5.0f}s",
+                    flush=True,
+                )
     return all_subs, pids
 
 
