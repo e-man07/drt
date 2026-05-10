@@ -1,0 +1,54 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+env/
+
+# DRT data — never commit (download via data/download*.py instead)
+data/raw/
+data/raw_full/
+data/embeddings/
+data/cache/
+*.npy
+*.jsonl
+
+# Checkpoints — train artifacts, kept locally only
+checkpoints/
+*.pt
+*.ckpt
+*.bin
+
+# Logs
+logs/
+*.log
+/tmp/
+
+# HF / model cache (if anyone runs the pipeline locally)
+.cache/
+**/cache/huggingface/
+**/cache/pip/
+
+# Plan / scratch files
+.claude/
+plans/
+
+# Akash deploy secrets — only the example is checked in
+deploy/.env
+!deploy/.env.example
+
+# Editor / OS
+*.swp
+*.swo
+.idea/
+.vscode/

@@ -1,0 +1,153 @@
+---
+# DRT Scale 2 — Akash A100 80GB training.
+#
+# Boots an A100 box with 200Gi persistent /workspace, installs deps, clones
+# the DRT repo, and auto-runs scripts/run_pipeline.sh in the background.
+# SSH (port 22) and JupyterLab (port 8888) are exposed for live access.
+#
+# Required env (set in Akash Console at deploy time):
+#   SSH_PASSWORD            — strong password (fail-closed, no default)
+#   HUGGING_FACE_HUB_TOKEN  — HF read token (BeIR/msmarco datasets are public,
+#                             but HF rate-limits anonymous users)
+#   WANDB_API_KEY           — optional, leave blank to disable wandb
+#   DRT_REPO_URL            — git URL of the drt repo
+#   DRT_REPO_REF            — commit SHA / tag / branch to check out
+#
+# After deploy: see deploy/README.md for SSH instructions and how to retrieve
+# the comparison table.
+
+version: "2.0"
+
+services:
+  training:
+    image: pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
+    env:
+      - "SSH_PASSWORD=<set-in-console>"
+      - "HUGGING_FACE_HUB_TOKEN=<set-in-console>"
+      - "WANDB_API_KEY="
+      - "WANDB_PROJECT=drt-scale2"
+      - "DRT_REPO_URL=https://github.com/<your-user>/drt.git"
+      - "DRT_REPO_REF=main"
+      - "HF_HOME=/workspace/cache/huggingface"
+      - "TRANSFORMERS_CACHE=/workspace/cache/huggingface"
+      - "PIP_CACHE_DIR=/workspace/cache/pip"
+      - "PYTHONUNBUFFERED=1"
+    command: ["/bin/bash", "-c"]
+    args:
+      - |
+        set -e
+        # System deps (idempotent, cheap on rerun)
+        apt-get update -qq
+        apt-get install -y -qq openssh-server git wget curl > /dev/null 2>&1
+        rm -rf /var/lib/apt/lists/*
+
+        # SSH — fail-closed if password not set
+        mkdir -p /run/sshd
+        if [ -z "${SSH_PASSWORD}" ] || [ "${SSH_PASSWORD}" = "<set-in-console>" ]; then
+          echo "ERROR: SSH_PASSWORD must be set in Akash Console" >&2
+          exit 1
+        fi
+        echo "root:${SSH_PASSWORD}" | chpasswd
+        sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+        sed -i 's/#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+        /usr/sbin/sshd
+
+        # Persistent dirs
+        mkdir -p /workspace/{data,checkpoints,logs,cache/huggingface,cache/pip,venv}
+
+        # venv on persistent volume → survives container restarts
+        if [ ! -f /workspace/venv/pyvenv.cfg ]; then
+          python -m venv /workspace/venv --system-site-packages
+          /workspace/venv/bin/pip install --upgrade pip
+        fi
+        # shellcheck disable=SC1091
+        source /workspace/venv/bin/activate
+        pip install -q --cache-dir=/workspace/cache/pip \
+          sentence-transformers datasets transformers tokenizers \
+          huggingface-hub wandb pyyaml tqdm jupyterlab numpy
+
+        # Clone / refresh the DRT repo
+        if [ ! -d /workspace/drt/.git ]; then
+          git clone "${DRT_REPO_URL}" /workspace/drt
+        fi
+        cd /workspace/drt
+        git fetch --all
+        git checkout "${DRT_REPO_REF}"
+        git pull --ff-only || true
+
+        # JupyterLab in background
+        nohup jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root \
+          --NotebookApp.token='' --NotebookApp.password='' \
+          --notebook-dir=/workspace > /workspace/logs/jupyter.log 2>&1 &
+
+        # Pipeline (auto-run, idempotent on redeploy)
+        chmod +x scripts/run_pipeline.sh
+        nohup bash scripts/run_pipeline.sh > /workspace/logs/pipeline.log 2>&1 &
+
+        echo "=== DRT Scale 2 container ready ==="
+        echo "  SSH:     port 22  (root / ${SSH_PASSWORD:0:3}***)"
+        echo "  Jupyter: port 8888 (no token)"
+        echo "  Pipeline log:    /workspace/logs/pipeline.log"
+        echo "  Comparison out:  /workspace/logs/comparison.txt"
+
+        # Stay alive for inspection
+        while true; do sleep 86400; done
+
+    expose:
+      - port: 22
+        as: 22
+        to:
+          - global: true
+      - port: 8888
+        as: 8888
+        to:
+          - global: true
+
+    params:
+      storage:
+        workspace:
+          mount: /workspace
+          readOnly: false
+        shm:
+          mount: /dev/shm
+          readOnly: false
+
+profiles:
+  compute:
+    training:
+      resources:
+        cpu:
+          units: 16
+        memory:
+          size: 64Gi
+        gpu:
+          units: 1
+          attributes:
+            vendor:
+              nvidia:
+                - model: a100
+        storage:
+          - size: 100Gi
+          - name: workspace
+            size: 200Gi
+            attributes:
+              persistent: true
+              class: beta3
+          - name: shm
+            size: 1Gi
+            attributes:
+              class: ram
+              persistent: false
+
+  placement:
+    akash:
+      pricing:
+        training:
+          denom: uakt
+          amount: 100000
+
+deployment:
+  training:
+    akash:
+      profile: training
+      count: 1

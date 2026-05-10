@@ -1,0 +1,38 @@
+# DRT Scale 2 — End-to-end training on A100 80GB.
+# Hyperparameters from DRT_Scale2_Prompt.md (lines 21-60).
+
+# Encoder
+model_name: sentence-transformers/all-MiniLM-L6-v2
+max_seq_length: 256
+
+# Decomposition / attention head shapes
+k: 6
+sub_dim: 64
+decomp_hidden: 512
+attn_hidden: 64
+
+# Optimization — differential learning rates
+encoder_lr: 5.0e-5
+head_lr: 2.0e-3
+weight_decay: 0.01
+warmup_ratio: 0.1
+
+# Batch + epochs (sized for A100 80GB, fp16 mixed precision)
+batch_size: 512
+grad_accum_steps: 1
+num_epochs: 5
+num_hard_negatives: 7
+
+# Losses (same as Scale 1)
+temperature: 0.05
+lambda_decorr: 0.1
+slot_dropout_p: 0.15
+
+# Memory / throughput
+grad_checkpoint: true
+
+# Logging / IO
+log_every: 50
+save_every_epoch: true
+seed: 42
+num_workers: 4

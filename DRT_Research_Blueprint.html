@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decomposed Relevance Tensors — Research Blueprint</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0C0E13;
+    --surface: #141720;
+    --surface-2: #1A1E2A;
+    --border: #252A3A;
+    --text: #E0E4EE;
+    --text-muted: #8890A4;
+    --accent: #6C9CFF;
+    --accent-glow: rgba(108, 156, 255, 0.15);
+    --accent-2: #FF8C6C;
+    --accent-3: #6CFFC4;
+    --accent-4: #C46CFF;
+    --code-bg: #111318;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'Source Sans 3', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(12, 14, 19, 0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 40px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+  nav .logo {
+    font-family: var(--serif);
+    font-size: 18px;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  nav .nav-links {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  nav a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  nav a:hover { color: var(--accent); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 120px 60px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -200px; right: -200px;
+    width: 800px; height: 800px;
+    background: radial-gradient(circle, rgba(108,156,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -100px; left: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(255,140,108,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero .tag {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(42px, 6vw, 80px);
+    line-height: 1.1;
+    color: #fff;
+    max-width: 900px;
+    margin-bottom: 28px;
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .hero .subtitle {
+    font-size: 20px;
+    color: var(--text-muted);
+    max-width: 640px;
+    line-height: 1.7;
+    margin-bottom: 48px;
+  }
+  .hero .meta-row {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+  .hero .meta-row span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hero .meta-row .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent-3);
+  }
+
+  /* ── MAIN CONTENT ── */
+  .content {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 40px 120px;
+  }
+
+  /* ── SECTIONS ── */
+  section {
+    margin-bottom: 80px;
+  }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  h2 {
+    font-family: var(--serif);
+    font-size: 36px;
+    color: #fff;
+    margin-bottom: 24px;
+    line-height: 1.2;
+  }
+  h3 {
+    font-family: var(--serif);
+    font-size: 24px;
+    color: #fff;
+    margin: 40px 0 16px;
+    line-height: 1.3;
+  }
+  h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 28px 0 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  p {
+    margin-bottom: 18px;
+    color: var(--text);
+  }
+  p.muted { color: var(--text-muted); }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    margin: 24px 0;
+  }
+  .card.highlight {
+    border-color: var(--accent);
+    background: linear-gradient(135deg, var(--accent-glow), var(--surface));
+  }
+  .card h3 { margin-top: 0; }
+
+  /* ── CODE ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    overflow-x: auto;
+    margin: 20px 0;
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.7;
+    color: #C5CCDD;
+  }
+  code {
+    font-family: var(--mono);
+    font-size: 0.9em;
+    background: var(--surface-2);
+    padding: 2px 7px;
+    border-radius: 4px;
+    color: var(--accent);
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+  .kw { color: var(--accent-4); }
+  .fn { color: var(--accent); }
+  .str { color: var(--accent-3); }
+  .cm { color: #5A6178; font-style: italic; }
+  .num { color: var(--accent-2); }
+
+  /* ── TABLES ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0;
+    font-size: 15px;
+  }
+  th {
+    text-align: left;
+    padding: 14px 16px;
+    background: var(--surface-2);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-bottom: 2px solid var(--border);
+  }
+  td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  tr:hover td { background: var(--surface); }
+
+  /* ── LISTS ── */
+  ul, ol {
+    margin: 16px 0 16px 24px;
+  }
+  li {
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+  li::marker { color: var(--accent); }
+
+  /* ── PHASE TIMELINE ── */
+  .phase {
+    display: flex;
+    gap: 24px;
+    margin: 28px 0;
+    position: relative;
+  }
+  .phase-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 48px;
+  }
+  .phase-dot {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 16px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .phase-line {
+    flex: 1;
+    width: 2px;
+    background: var(--border);
+    margin-top: 8px;
+  }
+  .phase-content {
+    flex: 1;
+    padding-bottom: 40px;
+  }
+  .phase-content h3 { margin-top: 4px; }
+  .phase:nth-child(1) .phase-dot { background: var(--accent); }
+  .phase:nth-child(2) .phase-dot { background: var(--accent-2); }
+  .phase:nth-child(3) .phase-dot { background: var(--accent-3); color: var(--bg); }
+  .phase:nth-child(4) .phase-dot { background: var(--accent-4); }
+
+  /* ── DIAGRAM BOXES ── */
+  .arch-flow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 24px 0;
+  }
+  .arch-box {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 20px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    text-align: center;
+    min-width: 120px;
+  }
+  .arch-box.accent {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-glow);
+  }
+  .arch-arrow {
+    color: var(--text-muted);
+    font-size: 20px;
+  }
+
+  /* ── EQUATION BLOCK ── */
+  .equation {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 24px 28px;
+    margin: 24px 0;
+    border-radius: 0 10px 10px 0;
+    font-family: var(--mono);
+    font-size: 16px;
+    color: #fff;
+    line-height: 2;
+  }
+  .equation .label {
+    font-size: 11px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 8px;
+    display: block;
+    font-weight: 500;
+  }
+
+  /* ── CALLOUT ── */
+  .callout {
+    background: linear-gradient(135deg, rgba(108,255,196,0.08), var(--surface));
+    border: 1px solid rgba(108,255,196,0.2);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 24px 0;
+  }
+  .callout.warn {
+    background: linear-gradient(135deg, rgba(255,140,108,0.08), var(--surface));
+    border-color: rgba(255,140,108,0.2);
+  }
+  .callout .callout-title {
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+    color: var(--accent-3);
+  }
+  .callout.warn .callout-title { color: var(--accent-2); }
+
+  /* ── GRID ── */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 24px 0;
+  }
+  @media (max-width: 700px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .hero { padding: 100px 24px 60px; }
+    .content { padding: 0 24px 80px; }
+    nav { padding: 12px 20px; gap: 16px; }
+    nav .nav-links { gap: 12px; font-size: 11px; }
+    h2 { font-size: 28px; }
+  }
+
+  /* ── DIVIDER ── */
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 60px 0;
+  }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    margin: 40px 0;
+  }
+  .toc h3 { margin-top: 0; font-size: 20px; }
+  .toc ol {
+    list-style: none;
+    counter-reset: toc;
+    margin: 16px 0 0 0;
+  }
+  .toc li {
+    counter-increment: toc;
+    margin-bottom: 6px;
+  }
+  .toc li::before {
+    content: counter(toc, decimal-leading-zero) ".";
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 13px;
+    margin-right: 12px;
+  }
+  .toc a {
+    color: var(--text);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .toc a:hover { color: var(--accent); }
+  .toc li.sub {
+    margin-left: 36px;
+    font-size: 15px;
+  }
+  .toc li.sub::before {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+    font-size: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    nav { display: none; }
+    .hero { min-height: auto; padding: 40px; }
+    body { background: #fff; color: #111; font-size: 12pt; }
+    .card, .callout, pre, .toc, .equation { break-inside: avoid; }
+    .card, .toc { border-color: #ccc; background: #f8f8f8; }
+    pre { background: #f0f0f0; }
+    h2, h3 { color: #111; }
+    code { background: #eee; color: #333; }
+    a { color: #111; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ NAV ═══════════ -->
+<nav>
+  <div class="logo">DRT</div>
+  <div class="nav-links">
+    <a href="#problem">Problem</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#training">Training</a>
+    <a href="#implementation">Implementation</a>
+    <a href="#roadmap">Roadmap</a>
+    <a href="#benchmarks">Benchmarks</a>
+    <a href="#stack">Tech Stack</a>
+  </div>
+</nav>
+
+<!-- ═══════════ HERO ═══════════ -->
+<div class="hero">
+  <div class="tag">Research Blueprint — v1.0</div>
+  <h1>Decomposed Relevance <em>Tensors</em></h1>
+  <p class="subtitle">
+    A new retrieval scoring paradigm that replaces flat cosine similarity with soft-learned sub-vector decomposition and query-adaptive weighting — designed to be as fast as cosine but as accurate as a cross-encoder.
+  </p>
+  <div class="meta-row">
+    <span><div class="dot"></div> Active Research</span>
+    <span>Target: M4 Mac (Scale 1) → Cloud GPU (Scale 2+)</span>
+    <span>Est. 4–8 weeks to paper-ready prototype</span>
+  </div>
+</div>
+
+<!-- ═══════════ CONTENT ═══════════ -->
+<div class="content">
+
+  <!-- TOC -->
+  <div class="toc">
+    <h3>Contents</h3>
+    <ol>
+      <li><a href="#problem">The Problem — Why Cosine Similarity is Broken</a></li>
+      <li><a href="#prior-art">Prior Art — What Exists and What Doesn't</a></li>
+      <li><a href="#thesis">Core Thesis — What We're Building</a></li>
+      <li><a href="#architecture">Architecture — Full System Design</a></li>
+      <li><a href="#training">Training Objectives — The Loss Functions</a></li>
+      <li><a href="#implementation">Implementation Plan — From Mac to Paper</a></li>
+      <li><a href="#roadmap">Phase Roadmap — Week-by-Week</a></li>
+      <li><a href="#benchmarks">Evaluation & Benchmarks</a></li>
+      <li><a href="#stack">Tech Stack & Dependencies</a></li>
+      <li><a href="#risks">Risks & Mitigations</a></li>
+      <li><a href="#novelty">Novelty Argument — Why This is Publishable</a></li>
+      <li><a href="#references">Key References</a></li>
+    </ol>
+  </div>
+
+  <!-- ═══════════ 01. PROBLEM ═══════════ -->
+  <section id="problem">
+    <div class="section-label">01</div>
+    <h2>The Problem — Why Cosine Similarity is Broken</h2>
+
+    <p>Every modern semantic search and RAG system follows the same pattern: encode text into a dense vector, then rank by cosine similarity. This approach has fundamental limitations that no amount of better encoders can fix, because <strong>the bottleneck is the scoring function, not the embedding</strong>.</p>
+
+    <h3>Fundamental Limitations</h3>
+
+    <div class="card">
+      <h4>1. Single Scalar Collapse</h4>
+      <p>Cosine similarity reduces all notions of "relevance" — topical overlap, intent match, entity alignment, temporal relevance, specificity — into a single number between -1 and 1. This is like rating a restaurant on one scale when you care about food quality, ambiance, service, and price independently.</p>
+    </div>
+
+    <div class="card">
+      <h4>2. Forced Symmetry</h4>
+      <p><code>sim(query, doc) = sim(doc, query)</code> — but relevance is not symmetric. "Dogs are animals" is highly relevant to the query "what are dogs?" but "what are dogs?" is a poor match for someone searching "tell me about animals." Cosine similarity cannot model this directional relationship.</p>
+    </div>
+
+    <div class="card">
+      <h4>3. Opaque Entanglement</h4>
+      <p>A 768-dimensional vector entangles entity information, topical signal, syntactic patterns, and intent markers into a single blob. There's no way to ask "did this match because the entity was right, or because the topic was similar?" This makes debugging, improving, and trusting the system nearly impossible.</p>
+    </div>
+
+    <div class="card">
+      <h4>4. Curse of Uniformity</h4>
+      <p>The same similarity function is applied to every query regardless of type. A factoid question ("When was Einstein born?") should prioritize entity and attribute matching. A topical query ("machine learning trends") should prioritize broad semantic overlap. Cosine treats them identically.</p>
+    </div>
+
+    <h3>The Two-Stage Hack</h3>
+    <p>The industry has worked around these limitations with a two-stage pipeline: fast cosine retrieval → expensive cross-encoder reranking. This works, but it's an engineering hack, not a solution. The first stage (cosine) has high recall but low precision. The second stage (cross-encoder) has high precision but can only process ~100 candidates. If the correct document doesn't survive the first stage, the cross-encoder never sees it.</p>
+
+    <div class="callout">
+      <div class="callout-title">The Opportunity</div>
+      <p>What if the first-stage scoring function itself were richer — capturing multi-dimensional relevance without the latency of a cross-encoder? That's the gap DRT fills.</p>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ═══════════ 02. PRIOR ART ═══════════ -->
+  <section id="prior-art">
+    <div class="section-label">02</div>
+    <h2>Prior Art — What Exists and What Doesn't</h2>
+
+    <table>
+      <tr>
+        <th>Approach</th>
+        <th>What It Does</th>
+        <th>What It Lacks</th>
+      </tr>
+      <tr>
+        <td><strong>Cosine / Dot Product</strong></td>
+        <td>Single-vector comparison, fast, ANN-indexable</td>
+        <td>Symmetric, single-scalar, no structure</td>
+      </tr>
+      <tr>
+        <td><strong>ColBERT (Late Interaction)</strong></td>
+        <td>Multi-vector per document (per-token), MaxSim scoring</td>
+        <td>Vectors aren't semantically typed; high storage cost</td>
+      </tr>
+      <tr>
+        <td><strong>Poly-encoder</strong></td>
+        <td>Learned attention codes, multiple doc representations</td>
+        <td>Codes aren't interpretable, no slot structure</td>
+      </tr>
+      <tr>
+        <td><strong>Matryoshka Embeddings</strong></td>
+        <td>Nested sub-vectors at different dimensionalities</td>
+        <td>Truncated, not decomposed — no semantic slots</td>
+      </tr>
+      <tr>
+        <td><strong>Cross-Encoders</strong></td>
+        <td>Joint query-doc encoding, highest accuracy</td>
+        <td>O(n) cost — can't be used for first-stage retrieval</td>
+      </tr>
+      <tr>
+        <td><strong>Knowledge Graphs</strong></td>
+        <td>Explicit entity-relation structure</td>
+        <td>Brittle, requires extraction, no fuzzy matching</td>
+      </tr>
+      <tr>
+        <td><strong>Barlow Twins / VICReg</strong></td>
+        <td>Decorrelation in self-supervised representation learning</td>
+        <td>Applied to vision/general SSL, never to retrieval scoring</td>
+      </tr>
+      <tr>
+        <td><strong>DPR (Dense Passage Retrieval)</strong></td>
+        <td>Separate query/doc encoders (asymmetric)</td>
+        <td>Still collapses to single dot product at the end</td>
+      </tr>
+    </table>
+
+    <div class="callout">
+      <div class="callout-title">The Gap</div>
+      <p>Nobody has combined: (a) soft-learned sub-vector decomposition, (b) decorrelation training forcing slot specialization, and (c) query-adaptive weighting — applied specifically to retrieval scoring. The individual components exist. The combination in this context does not.</p>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ═══════════ 03. THESIS ═══════════ -->
+  <section id="thesis">
+    <div class="section-label">03</div>
+    <h2>Core Thesis</h2>
+
+    <div class="card highlight">
+      <p style="font-size: 19px; line-height: 1.7; color: #fff; margin-bottom: 0;">
+        <strong>For any given text embedding, a learned decomposition into semantically specialized sub-vectors with query-adaptive weighted scoring extracts more retrieval signal than cosine similarity over the full vector.</strong>
+      </p>
+      <p style="margin-top: 16px; margin-bottom: 0;" class="muted">
+        This is testable on a laptop with frozen embeddings. If it holds for small encoders, it holds for large ones — the argument scales by construction.
+      </p>
+    </div>
+
+    <h3>Key Properties We Want</h3>
+    <ul>
+      <li><strong>Asymmetric by design</strong> — query and document play different roles in the scoring function</li>
+      <li><strong>Multi-dimensional relevance</strong> — score is a weighted combination of slot-level similarities</li>
+      <li><strong>Emergent structure</strong> — sub-vectors specialize without human-defined categories (Path B — soft decomposition)</li>
+      <li><strong>ANN-compatible</strong> — still indexable for fast retrieval at scale</li>
+      <li><strong>Interpretable post-hoc</strong> — probing experiments can reveal what each slot learned</li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <!-- ═══════════ 04. ARCHITECTURE ═══════════ -->
+  <section id="architecture">
+    <div class="section-label">04</div>
+    <h2>Architecture — Full System Design</h2>
+
+    <h3>High-Level Pipeline</h3>
+    <div class="arch-flow">
+      <div class="arch-box">Input Text</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box">Frozen Encoder<br><small style="color:var(--text-muted)">MiniLM-L6-v2</small></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box">384-dim Vector</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box accent">Decomposition Head</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box">k × d Sub-vectors</div>
+    </div>
+
+    <h3>Decomposition Head (the trainable part)</h3>
+    <p>This is the only component you train in Scale 1. It sits on top of frozen embeddings and learns to restructure them into specialized sub-vectors.</p>
+
+    <pre><code><span class="cm"># Architecture of the Decomposition Head</span>
+
+<span class="kw">Input</span>:  384-dim embedding (from frozen encoder)
+    ↓
+<span class="fn">Linear</span>(384, 512) + <span class="fn">LayerNorm</span> + <span class="fn">GELU</span>
+    ↓
+<span class="fn">Linear</span>(512, 384) + <span class="fn">LayerNorm</span> + <span class="fn">GELU</span>
+    ↓
+<span class="fn">Reshape</span> → k=<span class="num">6</span> sub-vectors of <span class="num">64</span> dims each
+    ↓
+<span class="fn">L2-Normalize</span> each sub-vector independently
+    ↓
+<span class="kw">Output</span>: [s₁, s₂, s₃, s₄, s₅, s₆]  —  each ∈ ℝ⁶⁴, ‖sᵢ‖ = 1</code></pre>
+
+    <h3>Query Attention Head</h3>
+    <p>A lightweight MLP that takes the full query embedding and produces per-slot importance weights. This is what makes the scoring <strong>query-adaptive</strong> — different queries emphasize different sub-vectors.</p>
+
+    <pre><code><span class="cm"># Query Attention Head</span>
+
+<span class="kw">Input</span>:  384-dim query embedding (full, pre-decomposition)
+    ↓
+<span class="fn">Linear</span>(384, 64) + <span class="fn">GELU</span>
+    ↓
+<span class="fn">Linear</span>(64, k=<span class="num">6</span>)
+    ↓
+<span class="fn">Softmax</span>
+    ↓
+<span class="kw">Output</span>: [α₁, α₂, ..., α₆]  —  Σαᵢ = 1</code></pre>
+
+    <h3>Scoring Function</h3>
+
+    <div class="equation">
+      <span class="label">DRT Scoring</span>
+      score(q, d) = Σᵢ₌₁ᵏ  αᵢ(q) · cos(qᵢ, dᵢ)
+      <br><br>
+      <span style="color: var(--text-muted); font-size: 14px;">
+      where αᵢ(q) = softmax(MLP(q_full))ᵢ<br>
+      qᵢ, dᵢ = i-th sub-vector of query and document<br>
+      k = number of sub-vectors (default: 6)<br>
+      </span>
+    </div>
+
+    <h3>Full Architecture Parameters</h3>
+    <table>
+      <tr><th>Component</th><th>Parameters</th><th>Notes</th></tr>
+      <tr><td>Frozen Encoder</td><td>22.7M (not trained)</td><td>all-MiniLM-L6-v2</td></tr>
+      <tr><td>Decomposition Head</td><td>~394K</td><td>Two linear layers + norms</td></tr>
+      <tr><td>Query Attention Head</td><td>~25K</td><td>Two linear layers</td></tr>
+      <tr><td><strong>Total Trainable</strong></td><td><strong>~419K</strong></td><td>Trains in minutes on M4</td></tr>
+    </table>
+
+    <h3>Why k=6 Sub-vectors of 64 Dims?</h3>
+    <p>6 × 64 = 384, preserving the total information capacity of the original embedding. Fewer sub-vectors (k=2-3) don't provide enough decomposition granularity. More (k=12+) approach ColBERT territory and lose the efficiency advantage. 64 dimensions per sub-vector is enough for meaningful similarity computation — research on product quantization shows 32-64 dims per subspace works well.</p>
+
+    <div class="callout">
+      <div class="callout-title">Hyperparameter — Treat k as Tunable</div>
+      <p>Run ablations with k ∈ {2, 4, 6, 8, 12}. The optimal k is an empirical finding and strengthens the paper. If k=4 beats k=8, that's an insight. If performance plateaus at k=6, that tells you the effective dimensionality of relevance.</p>
+    </div>
+
+    <h3>Indexing Strategy (For Scale)</h3>
+    <p>Two options for ANN compatibility:</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4>Option A: Concatenated Index</h4>
+        <p>Concatenate all sub-vectors into a single 384-dim vector. Build a standard HNSW/IVF index. Use cosine over the full concatenation as a first pass, then rerank top-100 with the weighted DRT score.</p>
+        <p class="muted">Pro: simplest. Con: first-pass doesn't use slot weights.</p>
+      </div>
+      <div class="card">
+        <h4>Option B: Per-Slot Indices</h4>
+        <p>Build k separate ANN indices, one per sub-vector. For a given query, retrieve top-N from each slot's index, union the candidates, then compute the full weighted DRT score on the union set.</p>
+        <p class="muted">Pro: slot-aware retrieval. Con: k× index storage, merge complexity.</p>
+      </div>
+    </div>
+    <p>For the prototype and paper, Option A is sufficient. Option B is an optimization for production deployment.</p>
+  </section>
+
+  <hr>
+
+  <!-- ═══════════ 05. TRAINING ═══════════ -->
+  <section id="training">
+    <div class="section-label">05</div>
+    <h2>Training Objectives — The Loss Functions</h2>
+
+    <p>The training objective has three components designed to work together. The retrieval loss makes the system find relevant documents. The decorrelation loss forces sub-vectors to specialize. The information bottleneck prevents redundancy.</p>
+
+    <div class="equation">
+      <span class="label">Total Loss</span>
+      L_total = L_retrieval + λ₁ · L_decorrelation + λ₂ · L_bottleneck
+      <br><br>
+      <span style="color: var(--text-muted); font-size: 14px;">
+      Recommended starting values: λ₁ = 0.1, λ₂ = 0.05
+      </span>
+    </div>
+
+    <h3>Loss 1: Contrastive Retrieval Loss</h3>
+    <p>Standard InfoNCE loss applied to the DRT score. For each query, the positive document should score higher than all negatives in the batch.</p>
+
+    <pre><code><span class="cm"># InfoNCE over DRT scores</span>
+<span class="kw">def</span> <span class="fn">retrieval_loss</span>(query_subs, query_alphas, pos_subs, neg_subs_batch):
+    pos_score = drt_score(query_subs, query_alphas, pos_subs)
+    neg_scores = [drt_score(query_subs, query_alphas, neg)
+                  <span class="kw">for</span> neg <span class="kw">in</span> neg_subs_batch]
+    logits = torch.cat([pos_score, *neg_scores])
+    <span class="kw">return</span> F.cross_entropy(logits / temperature, target=<span class="num">0</span>)
+
+<span class="cm"># where drt_score computes: Σ αᵢ · cos(qᵢ, dᵢ)</span></code></pre>
+
+    <h3>Loss 2: Decorrelation Loss</h3>
+    <p>Forces sub-vectors to capture different information. Computed over a batch of decomposed embeddings. Penalizes the off-diagonal elements of the cross-correlation matrix between sub-vectors.</p>
+
+    <pre><code><span class="cm"># Barlow-Twins-inspired decorrelation</span>
+<span class="kw">def</span> <span class="fn">decorrelation_loss</span>(sub_vectors):
+    <span class="cm"># sub_vectors shape: (batch, k, d)</span>
+    k = sub_vectors.shape[<span class="num">1</span>]
+    <span class="cm"># Compute pairwise cosine between slots across batch</span>
+    loss = <span class="num">0</span>
+    <span class="kw">for</span> i <span class="kw">in</span> range(k):
+        <span class="kw">for</span> j <span class="kw">in</span> range(i+<span class="num">1</span>, k):
+            <span class="cm"># Cross-correlation matrix between slot i and slot j</span>
+            c = (sub_vectors[:, i].T @ sub_vectors[:, j]) / batch_size
+            <span class="cm"># Penalize off-diagonal (redundancy between slots)</span>
+            loss += (c ** <span class="num">2</span>).sum()
+    <span class="kw">return</span> loss / (k * (k - <span class="num">1</span>) / <span class="num">2</span>)</code></pre>
+
+    <div class="callout">
+      <div class="callout-title">Why This Matters</div>
+      <p>Without decorrelation loss, the model will collapse — all sub-vectors will learn the same representation, and DRT degenerates into cosine similarity with extra steps. The decorrelation loss is what forces emergent specialization. This is the most critical component to get right.</p>
+    </div>
+
+    <h3>Loss 3: Information Bottleneck</h3>
+    <p>Per-slot dropout during training. Randomly zero out entire sub-vectors with probability p=0.15. This forces each sub-vector to independently carry useful retrieval signal — no slot can depend on another slot to compensate.</p>
+
+    <pre><code><span class="cm"># Slot-level dropout during training</span>
+<span class="kw">def</span> <span class="fn">slot_dropout</span>(sub_vectors, p=<span class="num">0.15</span>):
+    <span class="kw">if not</span> self.training:
+        <span class="kw">return</span> sub_vectors
+    <span class="cm"># Mask entire slots (not individual dims)</span>
+    mask = torch.bernoulli(torch.ones(k) * (<span class="num">1</span> - p))
+    mask = mask / mask.mean()  <span class="cm"># Scale to preserve expected value</span>
+    <span class="kw">return</span> sub_vectors * mask.unsqueeze(-<span class="num">1</span>)</code></pre>
+
+    <h3>Hard Negatives Strategy</h3>
+    <p>Quality of negatives is critical for contrastive learning. Three tiers:</p>
+    <ul>
+      <li><strong>In-batch negatives:</strong> Other positives in the batch. Free but easy.</li>
+      <li><strong>BM25 hard negatives:</strong> Documents that lexically match the query but aren't relevant. Available pre-mined for MS MARCO.</li>
+      <li><strong>Self-mined hard negatives:</strong> Every N epochs, run the current model on the training set, find its top-scoring false positives, add them as negatives. This is what makes training iteratively harder.</li>
+    </ul>
+    <p>For Scale 1 (frozen embeddings on Mac), in-batch negatives + pre-mined BM25 negatives are sufficient. Self-mining is a Scale 2 enhancement.</p>
+
+    <h3>Training Hyperparameters</h3>
+    <table>
+      <tr><th>Parameter</th><th>Scale 1 (Mac)</th><th>Scale 2 (GPU)</th></tr>
+      <tr><td>Batch size</td><td>128</td><td>512-1024</td></tr>
+      <tr><td>Learning rate</td><td>2e-3</td><td>5e-5 (with encoder)</td></tr>
+      <tr><td>Optimizer</td><td>AdamW</td><td>AdamW</td></tr>
+      <tr><td>Temperature (τ)</td><td>0.05</td><td>0.05 (learnable)</td></tr>
+      <tr><td>λ₁ (decorrelation)</td><td>0.1</td><td>0.1 (tune)</td></tr>
+      <tr><td>λ₂ (bottleneck p)</td><td>0.15</td><td>0.15 (tune)</td></tr>
+      <tr><td>Epochs</td><td>20-50</td><td>3-5</td></tr>
+      <tr><td>Warmup</td><td>10% steps</td><td>10% steps</td></tr>
+      <tr><td>Scheduler</td><td>Cosine decay</td><td>Cosine decay</td></tr>
+    </table>
+  </section>
+
+  <hr>
+
+  <!-- ═══════════ 06. IMPLEMENTATION ═══════════ -->
+  <section id="implementation">
+    <div class="section-label">06</div>
+    <h2>Implementation Plan — From Mac to Paper</h2>
+
+    <h3>Scale 1: Proof of Concept (Your M4 Mac)</h3>
+    <div class="card">
+      <h4>Goal</h4>
+      <p>Prove that DRT scoring beats cosine similarity on the same frozen embeddings.</p>
+
+      <h4>Steps</h4>
+      <ol>
+        <li><strong>Precompute embeddings</strong> — Download MS MARCO passage ranking (small dev set: ~7K queries, ~500K passages). Run all-MiniLM-L6-v2 on all passages and queries, save to disk as numpy arrays. Takes ~20-30 minutes on M4.</li>
+        <li><strong>Implement DecompositionHead</strong> — PyTorch module, ~50 lines. Two linear layers → reshape → normalize.</li>
+        <li><strong>Implement QueryAttentionHead</strong> — Tiny MLP, ~20 lines.</li>
+        <li><strong>Implement DRTScorer</strong> — Combines the heads, computes weighted slot similarities.</li>
+        <li><strong>Implement losses</strong> — Contrastive + decorrelation + slot dropout.</li>
+        <li><strong>Training loop</strong> — Train on precomputed embeddings. No encoder forward pass needed. Should converge in 10-20 minutes.</li>
+        <li><strong>Evaluate</strong> — Compare MRR@10 and nDCG@10 against raw cosine on the same embeddings.</li>
+        <li><strong>Ablations</strong> — Vary k, λ₁, λ₂. With vs without decorrelation. With vs without attention weights.</li>
+      </ol>
+
+      <h4>Success Criteria</h4>
+      <p>DRT scores at least 2% higher MRR@10 than cosine similarity on MS MARCO dev, using identical frozen embeddings.</p>
+    </div>
+
+    <h3>Scale 2: End-to-End Training (Cloud GPU)</h3>
+    <div class="card">
+      <h4>Goal</h4>
+      <p>Fine-tune the encoder jointly with the decomposition head so the encoder learns to produce decomposition-friendly embeddings.</p>
+
+      <h4>Changes from Scale 1</h4>
+      <ol>
+        <li>Unfreeze the encoder — full backprop through MiniLM.</li>
+        <li>Lower learning rate for encoder (5e-5), keep higher LR for heads (2e-3) — differential learning rates.</li>
+        <li>Train on full MS MARCO training set (~500K queries, ~8.8M passages).</li>
+        <li>Add self-mined hard negatives every 2 epochs.</li>
+        <li>Train for 3-5 epochs, ~2-4 days on a single 4090.</li>
+      </ol>
+
+      <h4>Success Criteria</h4>
+      <p>Beat a standard bi-encoder (same architecture, trained with cosine + contrastive loss) by 3%+ on BEIR benchmark average.</p>
+    </div>
+
+    <h3>Scale 3: Paper-Ready (Multiple Benchmarks)</h3>
+    <div class="card">
+      <h4>Goal</h4>
+      <p>Comprehensive evaluation suitable for publication at ACL, EMNLP, SIGIR, or similar venue.</p>
+
+      <h4>Experiments Needed</h4>
+      <ol>
+        <li>Full BEIR benchmark (18 datasets) — standard for retrieval papers.</li>
+        <li>Comparison against ColBERT, DPR, ANCE, Contriever, and cosine baseline.</li>
+        <li>Ablation studies — contribution of each loss component, effect of k, attention weights vs uniform.</li>
+        <li>Probing experiments — what do the sub-vectors learn? Train linear probes per slot for NER, topic classification, sentiment, etc.</li>
+        <li>Latency analysis — wall-clock retrieval time vs cosine vs ColBERT.</li>
+        <li>Qualitative examples — cases where DRT retrieves correct documents that cosine misses, with slot-level explanation.</li>
+      </ol>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ═══════════ 07. ROADMAP ═══════════ -->
+  <section id="roadmap">
+    <div class="section-label">07</div>
+    <h2>Phase Roadmap</h2>
+
+    <div class="phase">
+      <div class="phase-marker">
+        <div class="phase-dot">1</div>
+        <div class="phase-line"></div>
+      </div>
+      <div class="phase-content">
+        <h3>Literature Review & Validation (Week 1)</h3>
+        <p>Before writing any code, confirm novelty. Search for existing work on disentangled/decomposed retrieval embeddings. Check SIGIR, ACL, EMNLP proceedings from 2022-2025. Read ColBERTv2, Matryoshka, Poly-encoder, Barlow Twins, VICReg papers in detail. Document the gap clearly.</p>
+        <h4>Deliverable</h4>
+        <p>A 2-page related work section that clearly positions DRT against all existing approaches. If a paper already did this, pivot immediately — don't waste time.</p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-marker">
+        <div class="phase-dot">2</div>
+        <div class="phase-line"></div>
+      </div>
+      <div class="phase-content">
+        <h3>Scale 1 Prototype (Week 2-3)</h3>
+        <p>Build and run the proof-of-concept on your M4 Mac. Precompute embeddings, implement all components, train the decomposition head, run initial benchmarks.</p>
+        <h4>Deliverables</h4>
+        <ul>
+          <li>Working codebase with training, evaluation, and ablation scripts</li>
+          <li>Initial MRR@10 and nDCG@10 numbers on MS MARCO dev</li>
+          <li>Ablation table: vary k, λ₁, λ₂, with/without attention</li>
+          <li>Go/no-go decision: if gains < 1%, rethink the architecture before scaling up</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-marker">
+        <div class="phase-dot">3</div>
+        <div class="phase-line"></div>
+      </div>
+      <div class="phase-content">
+        <h3>Scale 2 Training (Week 4-5)</h3>
+        <p>Rent a cloud GPU (single 4090 or A100). Fine-tune end-to-end. Run full training on MS MARCO, evaluate on BEIR.</p>
+        <h4>Deliverables</h4>
+        <ul>
+          <li>Trained end-to-end model checkpoints</li>
+          <li>BEIR benchmark numbers (18 datasets)</li>
+          <li>Comparison table against baselines (cosine, ColBERT, DPR)</li>
+          <li>Probing experiment results — what did each slot learn?</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-marker">
+        <div class="phase-dot">4</div>
+        <div class="phase-line"></div>
+      </div>
+      <div class="phase-content">
+        <h3>Paper Writing & Submission (Week 6-8)</h3>
+        <p>Write the paper. Target: SIGIR, ACL, EMNLP, or ICLR depending on results strength. Include all experiments, ablations, analysis, and clear positioning against prior work.</p>
+        <h4>Paper Structure</h4>
+        <ul>
+          <li>Abstract + Introduction (the problem, the insight)</li>
+          <li>Related Work (positioning against ColBERT, Poly-encoder, etc.)</li>
+          <li>Method (architecture, losses, training procedure)</li>
+          <li>Experiments (benchmarks, ablations, probing)</li>
+          <li>Analysis (what the slots learn, failure cases, latency)</li>
+          <li>Conclusion + Future Work</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ═══════════ 08. BENCHMARKS ═══════════ -->
+  <section id="benchmarks">
+    <div class="section-label">08</div>
+    <h2>Evaluation & Benchmarks</h2>
+
+    <h3>Primary Metrics</h3>
+    <table>
+      <tr><th>Metric</th><th>What It Measures</th><th>Target</th></tr>
+      <tr><td>MRR@10</td><td>Mean reciprocal rank of first relevant doc in top-10</td><td>Beat cosine baseline by 2%+</td></tr>
+      <tr><td>nDCG@10</td><td>Normalized discounted cumulative gain, accounts for graded relevance</td><td>Beat cosine baseline by 2%+</td></tr>
+      <tr><td>Recall@100</td><td>Fraction of relevant docs in top-100</td><td>Match or beat cosine</td></tr>
+      <tr><td>Latency (ms)</td><td>Wall-clock scoring time per query</td><td>Within 2× of cosine</td></tr>
+    </table>
+
+    <h3>Benchmark Datasets</h3>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4>Scale 1 (Mac)</h4>
+        <ul>
+          <li>MS MARCO Dev (6,980 queries)</li>
+          <li>NFCorpus (323 queries)</li>
+          <li>SciFact (300 queries)</li>
+        </ul>
+        <p class="muted">Small enough to evaluate in seconds.</p>
+      </div>
+      <div class="card">
+        <h4>Scale 2-3 (Full Paper)</h4>
+        <ul>
+          <li>Full BEIR benchmark (18 datasets)</li>
+          <li>MS MARCO full eval</li>
+          <li>Natural Questions</li>
+          <li>TREC-COVID</li>
+        </ul>
+        <p class="muted">Standard for retrieval papers.</p>
+      </div>
+    </div>
+
+    <h3>Ablation Matrix</h3>
+    <p>Run all combinations to isolate contribution of each component:</p>
+    <table>
+      <tr><th>Variant</th><th>Decomposition</th><th>Decorrelation</th><th>Attention Weights</th><th>Slot Dropout</th></tr>
+      <tr><td>Cosine (baseline)</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+      <tr><td>Decompose only</td><td>✓</td><td>✗</td><td>✗ (uniform)</td><td>✗</td></tr>
+      <tr><td>+ Decorrelation</td><td>✓</td><td>✓</td><td>✗ (uniform)</td><td>✗</td></tr>
+      <tr><td>+ Attention</td><td>✓</td><td>✓</td><td>✓</td><td>✗</td></tr>
+      <tr><td>Full DRT</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+    </table>
+  </section>
+
+  <hr>
+
+  <!-- ═══════════ 09. TECH STACK ═══════════ -->
+  <section id="stack">
+    <div class="section-label">09</div>
+    <h2>Tech Stack & Dependencies</h2>
+
+    <h3>Core Framework</h3>
+    <table>
+      <tr><th>Component</th><th>Choice</th><th>Why</th></tr>
+      <tr><td>Language</td><td>Python 3.10+</td><td>ML ecosystem standard</td></tr>
+      <tr><td>Deep Learning</td><td>PyTorch 2.x</td><td>Best for research flexibility; MPS support for M4</td></tr>
+      <tr><td>Encoder</td><td>sentence-transformers</td><td>Pretrained MiniLM, easy embedding extraction</td></tr>
+      <tr><td>Tokenizer</td><td>HuggingFace Transformers</td><td>Comes with sentence-transformers</td></tr>
+      <tr><td>Data Loading</td><td>datasets (HuggingFace)</td><td>MS MARCO and BEIR available directly</td></tr>
+      <tr><td>Numerical</td><td>NumPy, SciPy</td><td>Embedding storage, sparse operations</td></tr>
+      <tr><td>Evaluation</td><td>pytrec_eval / ranx</td><td>Standard IR evaluation metrics</td></tr>
+      <tr><td>Experiment Tracking</td><td>Weights & Biases (wandb)</td><td>Free tier sufficient, logs metrics/configs</td></tr>
+      <tr><td>ANN Index</td><td>FAISS (faiss-cpu)</td><td>Fast similarity search, works on CPU</td></tr>
+    </table>
+
+    <h3>Project Structure</h3>
+    <pre><code>drt/
+├── configs/
+│   ├── scale1.yaml          <span class="cm"># Mac training config</span>
+│   ├── scale2.yaml          <span class="cm"># GPU training config</span>
+│   └── ablations.yaml       <span class="cm"># Ablation sweep configs</span>
+├── data/
+│   ├── download.py          <span class="cm"># Download MS MARCO, BEIR</span>
+│   ├── precompute.py        <span class="cm"># Precompute & cache embeddings</span>
+│   └── dataset.py           <span class="cm"># PyTorch Dataset for triplets</span>
+├── models/
+│   ├── decomposition.py     <span class="cm"># DecompositionHead module</span>
+│   ├── attention.py         <span class="cm"># QueryAttentionHead module</span>
+│   ├── scorer.py            <span class="cm"># DRTScorer (combines everything)</span>
+│   └── encoder.py           <span class="cm"># Encoder wrapper (frozen/unfrozen)</span>
+├── losses/
+│   ├── contrastive.py       <span class="cm"># InfoNCE retrieval loss</span>
+│   ├── decorrelation.py     <span class="cm"># Barlow-style decorrelation</span>
+│   └── combined.py          <span class="cm"># Combined loss with λ weights</span>
+├── training/
+│   ├── trainer.py           <span class="cm"># Training loop</span>
+│   ├── hard_negatives.py    <span class="cm"># Self-mining hard negatives</span>
+│   └── scheduler.py         <span class="cm"># LR scheduling</span>
+├── evaluation/
+│   ├── metrics.py           <span class="cm"># MRR, nDCG, Recall computation</span>
+│   ├── benchmark.py         <span class="cm"># Run full BEIR evaluation</span>
+│   ├── probing.py           <span class="cm"># Probe what slots learn</span>
+│   └── qualitative.py       <span class="cm"># Generate example analyses</span>
+├── scripts/
+│   ├── train_scale1.py      <span class="cm"># Entry point for Mac training</span>
+│   ├── train_scale2.py      <span class="cm"># Entry point for GPU training</span>
+│   ├── evaluate.py          <span class="cm"># Run benchmarks</span>
+│   └── ablation_sweep.py    <span class="cm"># Run all ablations</span>
+├── requirements.txt
+└── README.md</code></pre>
+
+    <h3>Installation (Mac M4)</h3>
+    <pre><code><span class="cm"># Create environment</span>
+python -m venv drt-env
+source drt-env/bin/activate
+
+<span class="cm"># Core dependencies</span>
+pip install torch torchvision  <span class="cm"># MPS backend auto-detected on M4</span>
+pip install sentence-transformers
+pip install datasets
+pip install faiss-cpu
+pip install wandb
+pip install ranx pytrec-eval-terrier
+pip install pyyaml tqdm numpy scipy
+
+<span class="cm"># Verify MPS (Apple Silicon GPU) is available</span>
+python -c <span class="str">"import torch; print(torch.backends.mps.is_available())"</span></code></pre>
+
+    <div class="callout">
+      <div class="callout-title">M4 Performance Note</div>
+      <p>PyTorch's MPS backend uses the M4's GPU for tensor operations. For the decomposition head training (Scale 1), MPS should give ~3-5× speedup over CPU. The frozen embeddings are precomputed on CPU, but training the head benefits from MPS acceleration. Set <code>device = "mps"</code> in your training config.</p>
+    </div>
+
+    <h3>Cloud GPU Setup (Scale 2)</h3>
+    <pre><code><span class="cm"># On a rented 4090/A100 (Lambda Labs, Vast.ai, or RunPod)</span>
+
+<span class="cm"># Same requirements, but with CUDA torch</span>
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+<span class="cm"># ... same other packages</span>
+
+<span class="cm"># Key differences in config:</span>
+device: cuda
+batch_size: <span class="num">512</span>
+encoder_lr: <span class="num">5e-5</span>      <span class="cm"># unfreeze encoder</span>
+head_lr: <span class="num">2e-3</span>
+gradient_accumulation_steps: <span class="num">4</span>
+fp16: <span class="kw">true</span>            <span class="cm"># mixed precision</span></code></pre>
+  </section>
+
+  <hr>
+
+  <!-- ═══════════ 10. RISKS ═══════════ -->
+  <section id="risks">
+    <div class="section-label">10</div>
+    <h2>Risks & Mitigations</h2>
+
+    <div class="card">
+      <h4>Risk: Slot Collapse</h4>
+      <p>All sub-vectors learn the same thing, reducing DRT to cosine with overhead.</p>
+      <p><strong>Mitigation:</strong> Decorrelation loss + slot dropout. Monitor inter-slot cosine similarity during training. If all slots correlate > 0.9, increase λ₁ aggressively. Also try: orthogonal initialization of the decomposition head weights.</p>
+    </div>
+
+    <div class="card">
+      <h4>Risk: Marginal Gains</h4>
+      <p>DRT only beats cosine by < 1%, which isn't publishable.</p>
+      <p><strong>Mitigation:</strong> Detect early at Scale 1. If frozen-embedding experiments show < 1% gain, the architecture needs rethinking before investing in Scale 2. Possible pivots: increase model capacity, try different decomposition approaches (e.g., soft attention-based slotting instead of reshape), or try information-theoretic losses.</p>
+    </div>
+
+    <div class="card">
+      <h4>Risk: Prior Art Found</h4>
+      <p>Literature review reveals someone already published this.</p>
+      <p><strong>Mitigation:</strong> Do the literature review FIRST (Phase 1). If a close match exists, pivot to extending their work — show that adding query-adaptive weights or different loss formulations improves their results. "We extend X with Y" is still publishable.</p>
+    </div>
+
+    <div class="card">
+      <h4>Risk: Training Instability</h4>
+      <p>The multi-objective loss (retrieval + decorrelation + bottleneck) causes training to diverge.</p>
+      <p><strong>Mitigation:</strong> Start with λ₁ = λ₂ = 0 (pure retrieval loss), train for a few epochs, then gradually increase λ₁ and λ₂. This warm-up lets the model first learn useful representations before applying structural constraints.</p>
+    </div>
+
+    <div class="card">
+      <h4>Risk: Latency Too High</h4>
+      <p>The query attention head and per-slot scoring add too much overhead at inference.</p>
+      <p><strong>Mitigation:</strong> The attention head is ~25K params — negligible inference cost (~0.01ms). Per-slot cosine is k=6 dot products vs 1 — 6× more, but on 64-dim vectors instead of 384-dim. Net compute is comparable. Benchmark carefully and report honest numbers.</p>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ═══════════ 11. NOVELTY ═══════════ -->
+  <section id="novelty">
+    <div class="section-label">11</div>
+    <h2>Novelty Argument — Why This is Publishable</h2>
+
+    <h3>The Contribution</h3>
+    <p>DRT introduces three ideas that have not been combined in the retrieval literature:</p>
+
+    <ol>
+      <li><strong>Soft-learned semantic decomposition for retrieval</strong> — unlike ColBERT (per-token, untyped) or Poly-encoder (attention codes, not decomposed), DRT learns a fixed number of semantically specialized sub-vectors via decorrelation training. The specialization is emergent, not human-defined.</li>
+
+      <li><strong>Query-adaptive weighted scoring</strong> — the relevance score is a learned weighted combination of per-slot similarities, where weights are query-dependent. No prior retrieval method does this. DPR uses a single dot product. ColBERT uses MaxSim. Neither adapts the scoring function to the query type.</li>
+
+      <li><strong>Decorrelation-driven representation learning for IR</strong> — applying Barlow Twins / VICReg-style decorrelation losses to retrieval embeddings forces sub-vector specialization. This technique exists in self-supervised vision but has never been applied to information retrieval.</li>
+    </ol>
+
+    <h3>Expected Reviewer Questions</h3>
+    <div class="grid-2">
+      <div class="card">
+        <h4>"How is this different from ColBERT?"</h4>
+        <p>ColBERT uses per-token vectors (variable count, untyped). DRT uses a fixed number of semantically decomposed sub-vectors with explicit decorrelation. ColBERT's MaxSim takes the max across all token pairs; DRT takes a weighted sum across aligned slots. They operate at different granularities.</p>
+      </div>
+      <div class="card">
+        <h4>"How is this different from Poly-encoder?"</h4>
+        <p>Poly-encoder's codes are learned attention queries over the document, producing multiple representations. But they're not decorrelated, not semantically typed, and the final scoring doesn't use query-adaptive weights. DRT's decorrelation loss and attention head are the key differences.</p>
+      </div>
+      <div class="card">
+        <h4>"Is this just multi-head attention?"</h4>
+        <p>No. Multi-head attention operates within the encoder. DRT's decomposition is on the output representation used for scoring. The attention heads in a transformer produce intermediate representations; DRT's sub-vectors are the final retrieval representation with explicit independence constraints.</p>
+      </div>
+      <div class="card">
+        <h4>"What if k=1 performs best?"</h4>
+        <p>Then DRT degenerates to cosine and the thesis is disproven. This is a clean negative result — also publishable. But the ablation should show whether performance improves and then plateaus with k, or peaks at k=1. Either way, it's informative.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ═══════════ 12. REFERENCES ═══════════ -->
+  <section id="references">
+    <div class="section-label">12</div>
+    <h2>Key References</h2>
+
+    <p>Essential reading before starting implementation. Organized by relevance to DRT.</p>
+
+    <h3>Direct Precursors (Must Read)</h3>
+    <ul>
+      <li>Khattab & Zaharia (2020) — <strong>ColBERT: Efficient and Effective Passage Search via Contextualized Late Interaction over BERT</strong> — the closest multi-vector retrieval baseline</li>
+      <li>Humeau et al. (2020) — <strong>Poly-encoders: Architectures and Pre-training Strategies for Fast and Accurate Multi-sentence Scoring</strong> — multi-code document representation</li>
+      <li>Zbontar et al. (2021) — <strong>Barlow Twins: Self-Supervised Learning via Redundancy Reduction</strong> — the decorrelation loss DRT adapts</li>
+      <li>Bardes et al. (2022) — <strong>VICReg: Variance-Invariance-Covariance Regularization for Self-Supervised Learning</strong> — alternative decorrelation approach</li>
+      <li>Kusupati et al. (2022) — <strong>Matryoshka Representation Learning</strong> — nested embeddings (different from DRT but related)</li>
+    </ul>
+
+    <h3>Retrieval Foundations</h3>
+    <ul>
+      <li>Karpukhin et al. (2020) — <strong>Dense Passage Retrieval for Open-Domain Question Answering (DPR)</strong></li>
+      <li>Xiong et al. (2021) — <strong>ANCE: Approximate Nearest Neighbor Negative Contrastive Learning for Dense Text Retrieval</strong></li>
+      <li>Izacard et al. (2022) — <strong>Unsupervised Dense Information Retrieval with Contrastive Learning (Contriever)</strong></li>
+      <li>Thakur et al. (2021) — <strong>BEIR: A Heterogeneous Benchmark for Zero-shot Evaluation of Information Retrieval Models</strong></li>
+    </ul>
+
+    <h3>Information-Theoretic (Future Direction)</h3>
+    <ul>
+      <li>Oord et al. (2018) — <strong>Representation Learning with Contrastive Predictive Coding (CPC / InfoNCE)</strong></li>
+      <li>Belghazi et al. (2018) — <strong>MINE: Mutual Information Neural Estimation</strong></li>
+      <li>Tishby et al. (2000) — <strong>The Information Bottleneck Method</strong></li>
+    </ul>
+
+    <h3>Disentangled Representations</h3>
+    <ul>
+      <li>Higgins et al. (2017) — <strong>β-VAE: Learning Basic Visual Concepts with a Constrained Variational Framework</strong></li>
+      <li>Locatello et al. (2019) — <strong>Challenging Common Assumptions in the Unsupervised Learning of Disentangled Representations</strong> — important cautionary paper</li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <!-- ═══════════ CLOSING ═══════════ -->
+  <section>
+    <div class="section-label">Next Step</div>
+    <h2>Start Here</h2>
+
+    <div class="card highlight">
+      <p style="font-size: 18px; color: #fff; line-height: 1.7; margin-bottom: 16px;">
+        Open Claude Code and say:
+      </p>
+      <pre><code style="color: var(--accent);">Read the DRT Research Blueprint document thoroughly.
+Then implement Phase 2 — Scale 1 prototype.
+
+Start by:
+1. Setting up the project structure
+2. Writing the data download and embedding precomputation scripts
+3. Implementing the DecompositionHead, QueryAttentionHead, and DRTScorer
+4. Implementing all three loss functions
+5. Writing the training loop for frozen-embedding training on Mac M4 (MPS)
+6. Writing the evaluation script comparing DRT vs cosine baseline
+
+Use PyTorch, sentence-transformers, and the MS MARCO small dev set.
+Target device: Apple M4 with MPS backend.</code></pre>
+      <p class="muted" style="margin-bottom: 0; margin-top: 16px;">
+        This document is your single source of truth. Every architectural decision, hyperparameter, and design choice is specified above. Claude Code has everything it needs to build the full prototype.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    DRT Research Blueprint · Generated May 2026 · Confidential Working Document
+  </footer>
+
+</div>
+</body>
+</html>
