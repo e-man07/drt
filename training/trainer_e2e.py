@@ -15,7 +15,7 @@ import torch.nn.functional as F
 from torch.cuda.amp import GradScaler, autocast
 from torch.utils.data import DataLoader
 
-from data.dataset_online import OnlineMSMarcoDataset, collate_text_triples
+from data.dataset_online import OnlineMSMarcoDataset, TokenizingCollator
 from losses.combined import slot_dropout
 from losses.decorrelation import decorrelation_loss
 from models.drt_model import DRTModel
@@ -67,27 +67,32 @@ def info_nce_with_explicit_negatives(
 
 def _drt_forward_pass(
     model: DRTModel,
-    queries: list[str],
-    positives: list[str],
-    flat_negatives: list[str],
+    q_tok: dict,
+    p_tok: dict,
+    n_tok: dict,
     num_neg: int,
     device: str,
     config: E2EConfig,
 ):
     """Runs one forward pass and returns (loss, components_dict).
 
-    Each batch:
-      - Tokenize and encode queries, positives, all flattened negatives.
-      - Decompose all into sub-vectors, get query alphas.
-      - Apply slot dropout to all sub-vectors.
-      - Compute pos / in-batch neg / hard-neg scores.
-      - InfoNCE + decorrelation.
+    Tokenization happens on DataLoader workers (TokenizingCollator). This
+    function only does encoder forward + decomposition + attention + losses.
     """
-    B = len(queries)
+    B = q_tok["input_ids"].shape[0]
 
-    q_subs, q_alphas = model.encode_query(queries, device)
-    p_subs = model.encode_doc(positives, device)
-    n_subs = model.encode_doc(flat_negatives, device).reshape(B, num_neg, model.k, model.sub_dim)
+    q_tok = {k: v.to(device, non_blocking=True) for k, v in q_tok.items()}
+    p_tok = {k: v.to(device, non_blocking=True) for k, v in p_tok.items()}
+    n_tok = {k: v.to(device, non_blocking=True) for k, v in n_tok.items()}
+
+    q_emb = model.encoder(q_tok["input_ids"], q_tok["attention_mask"])  # (B, 384)
+    p_emb = model.encoder(p_tok["input_ids"], p_tok["attention_mask"])  # (B, 384)
+    n_emb = model.encoder(n_tok["input_ids"], n_tok["attention_mask"])  # (B*num_neg, 384)
+
+    q_subs = model.decomposition(q_emb)
+    p_subs = model.decomposition(p_emb)
+    n_subs = model.decomposition(n_emb).reshape(B, num_neg, model.k, model.sub_dim)
+    q_alphas = model.attention(q_emb)
 
     pre_drop_subs = torch.cat([q_subs, p_subs], dim=0)
     L_dec = decorrelation_loss(pre_drop_subs)
@@ -160,14 +165,16 @@ def train_drt_e2e(
         weight_decay=config.weight_decay,
     )
 
+    collator = TokenizingCollator(model.encoder.tokenizer, max_seq_length=config.max_seq_length)
     loader = DataLoader(
         train_dataset,
         batch_size=config.batch_size,
         shuffle=True,
         drop_last=True,
         num_workers=config.num_workers,
-        collate_fn=collate_text_triples,
+        collate_fn=collator,
         pin_memory=(device == "cuda"),
+        persistent_workers=(config.num_workers > 0),
     )
 
     total_steps = (len(loader) // config.grad_accum_steps) * config.num_epochs
@@ -186,10 +193,11 @@ def train_drt_e2e(
         sums = {"loss": 0.0, "ret": 0.0, "dec": 0.0, "n": 0}
 
         optimizer.zero_grad(set_to_none=True)
-        for batch_idx, (queries, positives, flat_negatives, num_neg) in enumerate(loader):
+        for batch_idx, batch in enumerate(loader):
             with autocast(enabled=(device == "cuda"), dtype=torch.float16):
                 loss, comp = _drt_forward_pass(
-                    model, queries, positives, flat_negatives, num_neg, device, config
+                    model, batch["q_tok"], batch["p_tok"], batch["n_tok"], batch["num_neg"],
+                    device, config,
                 )
                 loss = loss / config.grad_accum_steps
 

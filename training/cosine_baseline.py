@@ -19,7 +19,7 @@ import torch.nn.functional as F
 from torch.cuda.amp import GradScaler, autocast
 from torch.utils.data import DataLoader
 
-from data.dataset_online import OnlineMSMarcoDataset, collate_text_triples
+from data.dataset_online import OnlineMSMarcoDataset, TokenizingCollator
 from models.encoder import DEFAULT_MODEL, MiniLMEncoder
 from training.scheduler import cosine_warmup_schedule
 
@@ -49,21 +49,18 @@ class CosineBaselineConfig:
 
 def _baseline_forward_pass(
     encoder: MiniLMEncoder,
-    queries: list[str],
-    positives: list[str],
-    flat_negatives: list[str],
+    q_tok: dict,
+    p_tok: dict,
+    n_tok: dict,
     num_neg: int,
     device: str,
     temperature: float,
 ) -> torch.Tensor:
-    B = len(queries)
+    B = q_tok["input_ids"].shape[0]
 
-    q_tok = encoder.tokenize(queries)
-    p_tok = encoder.tokenize(positives)
-    n_tok = encoder.tokenize(flat_negatives)
-    q_tok = {k: v.to(device) for k, v in q_tok.items()}
-    p_tok = {k: v.to(device) for k, v in p_tok.items()}
-    n_tok = {k: v.to(device) for k, v in n_tok.items()}
+    q_tok = {k: v.to(device, non_blocking=True) for k, v in q_tok.items()}
+    p_tok = {k: v.to(device, non_blocking=True) for k, v in p_tok.items()}
+    n_tok = {k: v.to(device, non_blocking=True) for k, v in n_tok.items()}
 
     q = encoder(q_tok["input_ids"], q_tok["attention_mask"])  # (B, 384)
     p = encoder(p_tok["input_ids"], p_tok["attention_mask"])  # (B, 384)
@@ -110,14 +107,16 @@ def train_cosine_baseline(
         weight_decay=config.weight_decay,
     )
 
+    collator = TokenizingCollator(encoder.tokenizer, max_seq_length=config.max_seq_length)
     loader = DataLoader(
         train_dataset,
         batch_size=config.batch_size,
         shuffle=True,
         drop_last=True,
         num_workers=config.num_workers,
-        collate_fn=collate_text_triples,
+        collate_fn=collator,
         pin_memory=(device == "cuda"),
+        persistent_workers=(config.num_workers > 0),
     )
 
     total_steps = (len(loader) // config.grad_accum_steps) * config.num_epochs
@@ -136,10 +135,10 @@ def train_cosine_baseline(
         sums = {"loss": 0.0, "n": 0}
 
         optimizer.zero_grad(set_to_none=True)
-        for batch_idx, (queries, positives, flat_negatives, num_neg) in enumerate(loader):
+        for batch_idx, batch in enumerate(loader):
             with autocast(enabled=(device == "cuda"), dtype=torch.float16):
                 loss = _baseline_forward_pass(
-                    encoder, queries, positives, flat_negatives, num_neg,
+                    encoder, batch["q_tok"], batch["p_tok"], batch["n_tok"], batch["num_neg"],
                     device, config.temperature,
                 )
                 loss = loss / config.grad_accum_steps

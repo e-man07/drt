@@ -124,10 +124,46 @@ class OnlineMSMarcoDataset(Dataset):
 
 
 def collate_text_triples(batch: list[tuple[str, str, list[str]]]):
-    """Default collate: zip into three parallel lists."""
+    """Plain text collate: zip into parallel lists. Tokenization is left to caller."""
     queries = [b[0] for b in batch]
     positives = [b[1] for b in batch]
     negatives_per_row = [b[2] for b in batch]
     flat_negatives = [n for row in negatives_per_row for n in row]
     num_neg = len(negatives_per_row[0]) if negatives_per_row else 0
     return queries, positives, flat_negatives, num_neg
+
+
+class TokenizingCollator:
+    """Collate-fn that tokenizes on DataLoader worker processes.
+
+    Without this, tokenization happens on the main training thread between
+    GPU steps and the GPU sits idle ~50% of wall clock. With num_workers > 0,
+    each worker holds a copy of the tokenizer (pickled across the fork) and
+    runs tokenization in parallel, keeping the GPU fed.
+    """
+
+    def __init__(self, tokenizer, max_seq_length: int = 256):
+        self.tokenizer = tokenizer
+        self.max_seq_length = max_seq_length
+
+    def _tok(self, texts: list[str]):
+        return self.tokenizer(
+            texts,
+            padding=True,
+            truncation=True,
+            max_length=self.max_seq_length,
+            return_tensors="pt",
+        )
+
+    def __call__(self, batch: list[tuple[str, str, list[str]]]):
+        queries = [b[0] for b in batch]
+        positives = [b[1] for b in batch]
+        negatives_per_row = [b[2] for b in batch]
+        flat_negatives = [n for row in negatives_per_row for n in row]
+        num_neg = len(negatives_per_row[0]) if negatives_per_row else 0
+        return {
+            "q_tok": self._tok(queries),
+            "p_tok": self._tok(positives),
+            "n_tok": self._tok(flat_negatives),
+            "num_neg": num_neg,
+        }
