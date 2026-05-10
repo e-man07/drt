@@ -1,0 +1,10 @@
+qrels already present in /workspace/data/qrels, skipping.
+queries already present, skipping.
+corpus already present, skipping.
+Downloading hard negatives...
+Downloading https://msmarco.z22.web.core.windows.net/msmarcoranking/qidpidtriples.train.full.2.tsv.gz
+  -> /workspace/data/hard_negatives.tsv.gz
+Decompressing -> /workspace/data/hard_negatives.tsv
+  wrote 397,768,673 hard-negative triples
+
+Done. Outputs in /workspace/data/

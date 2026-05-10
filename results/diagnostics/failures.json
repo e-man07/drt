@@ -1,0 +1,200 @@
+{
+  "n_eligible": 6980,
+  "wins": {
+    "avg_query_len": 5.45,
+    "labels": {
+      "factoid=0": 41,
+      "has_entity=0": 97,
+      "length_bucket=0": 57,
+      "factoid=1": 59,
+      "length_bucket=2": 3,
+      "length_bucket=1": 40,
+      "has_entity=1": 3
+    },
+    "examples": [
+      {
+        "qid": "464860",
+        "query": "node js import",
+        "n_relevant": 1,
+        "bl_mrr": 0.0,
+        "drt_mrr": 1.0,
+        "delta": 1.0
+      },
+      {
+        "qid": "1043969",
+        "query": "what is the best place for all inclusive vacations for families",
+        "n_relevant": 1,
+        "bl_mrr": 0.0,
+        "drt_mrr": 1.0,
+        "delta": 1.0
+      },
+      {
+        "qid": "420934",
+        "query": "is physical therapy",
+        "n_relevant": 1,
+        "bl_mrr": 0.0,
+        "drt_mrr": 1.0,
+        "delta": 1.0
+      },
+      {
+        "qid": "660479",
+        "query": "what food helps to produce collagen",
+        "n_relevant": 2,
+        "bl_mrr": 0.0,
+        "drt_mrr": 1.0,
+        "delta": 1.0
+      },
+      {
+        "qid": "557157",
+        "query": "what are copper coated carbon rods used for",
+        "n_relevant": 1,
+        "bl_mrr": 0.0,
+        "drt_mrr": 1.0,
+        "delta": 1.0
+      },
+      {
+        "qid": "808200",
+        "query": "what is the best description of an adaptation",
+        "n_relevant": 1,
+        "bl_mrr": 0.1111111111111111,
+        "drt_mrr": 1.0,
+        "delta": 0.8888888888888888
+      },
+      {
+        "qid": "1099632",
+        "query": "how can nitrogen be fixed",
+        "n_relevant": 1,
+        "bl_mrr": 0.1111111111111111,
+        "drt_mrr": 1.0,
+        "delta": 0.8888888888888888
+      },
+      {
+        "qid": "91345",
+        "query": "chemistry amu definition",
+        "n_relevant": 1,
+        "bl_mrr": 0.125,
+        "drt_mrr": 1.0,
+        "delta": 0.875
+      },
+      {
+        "qid": "1087904",
+        "query": "what age do moles appear",
+        "n_relevant": 1,
+        "bl_mrr": 0.14285714285714285,
+        "drt_mrr": 1.0,
+        "delta": 0.8571428571428572
+      },
+      {
+        "qid": "1098787",
+        "query": "how late can males receive hpv vaccine",
+        "n_relevant": 1,
+        "bl_mrr": 0.14285714285714285,
+        "drt_mrr": 1.0,
+        "delta": 0.8571428571428572
+      }
+    ]
+  },
+  "losses": {
+    "avg_query_len": 6.29,
+    "labels": {
+      "factoid=1": 79,
+      "has_entity=0": 95,
+      "length_bucket=1": 56,
+      "factoid=0": 21,
+      "length_bucket=0": 38,
+      "has_entity=1": 5,
+      "length_bucket=2": 6
+    },
+    "examples": [
+      {
+        "qid": "168175",
+        "query": "does law enforcement have the responsibility to intervene?",
+        "n_relevant": 1,
+        "bl_mrr": 1.0,
+        "drt_mrr": 0.0,
+        "delta": -1.0
+      },
+      {
+        "qid": "933236",
+        "query": "what's the temperature in tucson arizona right now?",
+        "n_relevant": 1,
+        "bl_mrr": 1.0,
+        "drt_mrr": 0.0,
+        "delta": -1.0
+      },
+      {
+        "qid": "1089691",
+        "query": "the word said hello in swedish",
+        "n_relevant": 1,
+        "bl_mrr": 1.0,
+        "drt_mrr": 0.0,
+        "delta": -1.0
+      },
+      {
+        "qid": "141353",
+        "query": "dept of treasury careers",
+        "n_relevant": 1,
+        "bl_mrr": 1.0,
+        "drt_mrr": 0.0,
+        "delta": -1.0
+      },
+      {
+        "qid": "975997",
+        "query": "where is 89130",
+        "n_relevant": 1,
+        "bl_mrr": 1.0,
+        "drt_mrr": 0.0,
+        "delta": -1.0
+      },
+      {
+        "qid": "1032074",
+        "query": "who is deputy director andrew mccabe",
+        "n_relevant": 1,
+        "bl_mrr": 1.0,
+        "drt_mrr": 0.0,
+        "delta": -1.0
+      },
+      {
+        "qid": "1077019",
+        "query": "what internet security do you get with rcn",
+        "n_relevant": 1,
+        "bl_mrr": 1.0,
+        "drt_mrr": 0.0,
+        "delta": -1.0
+      },
+      {
+        "qid": "583369",
+        "query": "what carnival ships have havana",
+        "n_relevant": 1,
+        "bl_mrr": 1.0,
+        "drt_mrr": 0.0,
+        "delta": -1.0
+      },
+      {
+        "qid": "1042800",
+        "query": "what is the color of steel coin?",
+        "n_relevant": 1,
+        "bl_mrr": 1.0,
+        "drt_mrr": 0.0,
+        "delta": -1.0
+      },
+      {
+        "qid": "838453",
+        "query": "what is the parent company for adidas",
+        "n_relevant": 1,
+        "bl_mrr": 1.0,
+        "drt_mrr": 0.0,
+        "delta": -1.0
+      }
+    ]
+  },
+  "global_metrics": {
+    "bl_mrr@10_mean": 0.32778471369445583,
+    "drt_mrr@10_mean": 0.3074698685586938,
+    "delta_mean": -0.02031484513576204,
+    "delta_median": 0.0,
+    "frac_drt_better": 0.14040114613180515,
+    "frac_drt_worse": 0.20859598853868194,
+    "frac_tie": 0.6510028653295129
+  }
+}

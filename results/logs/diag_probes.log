@@ -1,0 +1,34 @@
+Label counts:
+  factoid:        5,004 / 6,980
+  has_entity:     208 / 6,980
+  length_bucket:  short=3438 med=3209 long=333
+  slot 0 | factoid         acc=0.7593  (majority=0.7168)
+  slot 0 | has_entity      acc=0.9704  (majority=0.9704)
+  slot 0 | length_bucket   acc=0.6232  (majority=0.4924)
+  slot 1 | factoid         acc=0.7607  (majority=0.7168)
+  slot 1 | has_entity      acc=0.9704  (majority=0.9704)
+  slot 1 | length_bucket   acc=0.6394  (majority=0.4924)
+  slot 2 | factoid         acc=0.7693  (majority=0.7168)
+  slot 2 | has_entity      acc=0.9704  (majority=0.9704)
+  slot 2 | length_bucket   acc=0.6423  (majority=0.4924)
+  slot 3 | factoid         acc=0.7741  (majority=0.7168)
+  slot 3 | has_entity      acc=0.9704  (majority=0.9704)
+  slot 3 | length_bucket   acc=0.6423  (majority=0.4924)
+  slot 4 | factoid         acc=0.7736  (majority=0.7168)
+  slot 4 | has_entity      acc=0.9704  (majority=0.9704)
+  slot 4 | length_bucket   acc=0.6380  (majority=0.4924)
+  slot 5 | factoid         acc=0.7607  (majority=0.7168)
+  slot 5 | has_entity      acc=0.9704  (majority=0.9704)
+  slot 5 | length_bucket   acc=0.6079  (majority=0.4924)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/drt/scripts/diagnose.py", line 759, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/workspace/drt/scripts/diagnose.py", line 754, in main
+    args.func(args)
+  File "/workspace/drt/scripts/diagnose.py", line 563, in cmd_probes
+    clf = LogisticRegression(max_iter=2000, multi_class="auto").fit(X_tr, y_tr)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: LogisticRegression.__init__() got an unexpected keyword argument 'multi_class'

@@ -1,0 +1,105 @@
+Training pairs: 418,010
+Device: cuda | torch: 2.5.1+cu124
+GPU: NVIDIA A100-SXM4-80GB
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 6491.27it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/workspace/drt/training/trainer_e2e.py:184: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  scaler = GradScaler(enabled=(device == "cuda"))
+Trainable params — encoder: 22,713,216 | heads: 420,934 | total: 23,134,150
+Steps/epoch: 816 | optim steps: 4080 | warmup: 408
+/workspace/drt/training/trainer_e2e.py:197: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with autocast(enabled=(device == "cuda"), dtype=torch.float16):
+[transformers] `use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+/opt/conda/lib/python3.11/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: Detected call of `lr_scheduler.step()` before `optimizer.step()`. In PyTorch 1.1.0 and later, you should call them in the opposite order: `optimizer.step()` before `lr_scheduler.step()`.  Failure to do this will result in PyTorch skipping the first value of the learning rate schedule. See more details at https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+  warnings.warn(
+  epoch 1 | step     50 | loss=1.0002 ret=0.9955 dec=0.0475 | enc_lr=6.13e-06 head_lr=2.45e-04
+  epoch 1 | step    100 | loss=0.8481 ret=0.8447 dec=0.0337 | enc_lr=1.23e-05 head_lr=4.90e-04
+  epoch 1 | step    150 | loss=0.6666 ret=0.6647 dec=0.0190 | enc_lr=1.84e-05 head_lr=7.35e-04
+  epoch 1 | step    200 | loss=0.7091 ret=0.7079 dec=0.0123 | enc_lr=2.45e-05 head_lr=9.80e-04
+  epoch 1 | step    250 | loss=0.6738 ret=0.6728 dec=0.0101 | enc_lr=3.06e-05 head_lr=1.23e-03
+  epoch 1 | step    300 | loss=0.5789 ret=0.5779 dec=0.0102 | enc_lr=3.68e-05 head_lr=1.47e-03
+  epoch 1 | step    350 | loss=0.6683 ret=0.6673 dec=0.0100 | enc_lr=4.29e-05 head_lr=1.72e-03
+  epoch 1 | step    400 | loss=0.6844 ret=0.6832 dec=0.0112 | enc_lr=4.90e-05 head_lr=1.96e-03
+  epoch 1 | step    450 | loss=0.6838 ret=0.6827 dec=0.0109 | enc_lr=5.00e-05 head_lr=2.00e-03
+  epoch 1 | step    500 | loss=0.6809 ret=0.6798 dec=0.0110 | enc_lr=4.99e-05 head_lr=2.00e-03
+  epoch 1 | step    550 | loss=0.6274 ret=0.6263 dec=0.0110 | enc_lr=4.98e-05 head_lr=1.99e-03
+  epoch 1 | step    600 | loss=0.7255 ret=0.7245 dec=0.0100 | enc_lr=4.97e-05 head_lr=1.99e-03
+  epoch 1 | step    650 | loss=0.6655 ret=0.6644 dec=0.0106 | enc_lr=4.95e-05 head_lr=1.98e-03
+  epoch 1 | step    700 | loss=0.5328 ret=0.5317 dec=0.0105 | enc_lr=4.92e-05 head_lr=1.97e-03
+  epoch 1 | step    750 | loss=0.5904 ret=0.5893 dec=0.0107 | enc_lr=4.89e-05 head_lr=1.96e-03
+  epoch 1 | step    800 | loss=0.6519 ret=0.6509 dec=0.0103 | enc_lr=4.86e-05 head_lr=1.94e-03
+Epoch 1/5 | loss=0.7459 ret=0.7438 dec=0.0211 | 1433s
+  saved /workspace/checkpoints/drt_scale2_epoch1.pt
+  epoch 2 | step    850 | loss=0.5089 ret=0.5079 dec=0.0099 | enc_lr=4.82e-05 head_lr=1.93e-03
+  epoch 2 | step    900 | loss=0.5806 ret=0.5796 dec=0.0099 | enc_lr=4.78e-05 head_lr=1.91e-03
+  epoch 2 | step    950 | loss=0.5520 ret=0.5509 dec=0.0103 | enc_lr=4.74e-05 head_lr=1.89e-03
+  epoch 2 | step   1000 | loss=0.5793 ret=0.5783 dec=0.0098 | enc_lr=4.69e-05 head_lr=1.87e-03
+  epoch 2 | step   1050 | loss=0.5690 ret=0.5680 dec=0.0100 | enc_lr=4.63e-05 head_lr=1.85e-03
+  epoch 2 | step   1100 | loss=0.6640 ret=0.6630 dec=0.0100 | enc_lr=4.57e-05 head_lr=1.83e-03
+  epoch 2 | step   1150 | loss=0.5950 ret=0.5940 dec=0.0099 | enc_lr=4.51e-05 head_lr=1.81e-03
+  epoch 2 | step   1200 | loss=0.5763 ret=0.5753 dec=0.0098 | enc_lr=4.45e-05 head_lr=1.78e-03
+  epoch 2 | step   1250 | loss=0.5844 ret=0.5834 dec=0.0099 | enc_lr=4.38e-05 head_lr=1.75e-03
+  epoch 2 | step   1300 | loss=0.4762 ret=0.4752 dec=0.0100 | enc_lr=4.31e-05 head_lr=1.72e-03
+  epoch 2 | step   1350 | loss=0.5322 ret=0.5312 dec=0.0104 | enc_lr=4.23e-05 head_lr=1.69e-03
+  epoch 2 | step   1400 | loss=0.5309 ret=0.5298 dec=0.0106 | enc_lr=4.15e-05 head_lr=1.66e-03
+  epoch 2 | step   1450 | loss=0.5072 ret=0.5061 dec=0.0112 | enc_lr=4.07e-05 head_lr=1.63e-03
+  epoch 2 | step   1500 | loss=0.5555 ret=0.5544 dec=0.0113 | enc_lr=3.99e-05 head_lr=1.59e-03
+  epoch 2 | step   1550 | loss=0.5304 ret=0.5292 dec=0.0119 | enc_lr=3.90e-05 head_lr=1.56e-03
+  epoch 2 | step   1600 | loss=0.5583 ret=0.5570 dec=0.0133 | enc_lr=3.81e-05 head_lr=1.52e-03
+Epoch 2/5 | loss=0.5523 ret=0.5513 dec=0.0105 | 1430s
+  saved /workspace/checkpoints/drt_scale2_epoch2.pt
+  epoch 3 | step   1650 | loss=0.5107 ret=0.5095 dec=0.0118 | enc_lr=3.72e-05 head_lr=1.49e-03
+  epoch 3 | step   1700 | loss=0.4064 ret=0.4052 dec=0.0127 | enc_lr=3.62e-05 head_lr=1.45e-03
+  epoch 3 | step   1750 | loss=0.4053 ret=0.4040 dec=0.0127 | enc_lr=3.53e-05 head_lr=1.41e-03
+  epoch 3 | step   1800 | loss=0.4498 ret=0.4485 dec=0.0130 | enc_lr=3.43e-05 head_lr=1.37e-03
+  epoch 3 | step   1850 | loss=0.3951 ret=0.3937 dec=0.0140 | enc_lr=3.33e-05 head_lr=1.33e-03
+  epoch 3 | step   1900 | loss=0.4418 ret=0.4403 dec=0.0146 | enc_lr=3.23e-05 head_lr=1.29e-03
+  epoch 3 | step   1950 | loss=0.4930 ret=0.4916 dec=0.0143 | enc_lr=3.12e-05 head_lr=1.25e-03
+  epoch 3 | step   2000 | loss=0.4147 ret=0.4133 dec=0.0138 | enc_lr=3.02e-05 head_lr=1.21e-03
+  epoch 3 | step   2050 | loss=0.4446 ret=0.4430 dec=0.0155 | enc_lr=2.91e-05 head_lr=1.17e-03
+  epoch 3 | step   2100 | loss=0.5308 ret=0.5294 dec=0.0133 | enc_lr=2.81e-05 head_lr=1.12e-03
+  epoch 3 | step   2150 | loss=0.4475 ret=0.4462 dec=0.0137 | enc_lr=2.70e-05 head_lr=1.08e-03
+  epoch 3 | step   2200 | loss=0.4893 ret=0.4878 dec=0.0150 | enc_lr=2.59e-05 head_lr=1.04e-03
+  epoch 3 | step   2250 | loss=0.4983 ret=0.4969 dec=0.0142 | enc_lr=2.49e-05 head_lr=9.95e-04
+  epoch 3 | step   2300 | loss=0.4325 ret=0.4309 dec=0.0156 | enc_lr=2.38e-05 head_lr=9.52e-04
+  epoch 3 | step   2350 | loss=0.5017 ret=0.5001 dec=0.0157 | enc_lr=2.27e-05 head_lr=9.09e-04
+  epoch 3 | step   2400 | loss=0.4540 ret=0.4524 dec=0.0162 | enc_lr=2.17e-05 head_lr=8.67e-04
+Epoch 3/5 | loss=0.4561 ret=0.4546 dec=0.0142 | 1428s
+  saved /workspace/checkpoints/drt_scale2_epoch3.pt
+  epoch 4 | step   2450 | loss=0.4293 ret=0.4276 dec=0.0171 | enc_lr=2.06e-05 head_lr=8.25e-04
+  epoch 4 | step   2500 | loss=0.4645 ret=0.4630 dec=0.0157 | enc_lr=1.96e-05 head_lr=7.83e-04
+  epoch 4 | step   2550 | loss=0.3984 ret=0.3968 dec=0.0156 | enc_lr=1.85e-05 head_lr=7.41e-04
+  epoch 4 | step   2600 | loss=0.3797 ret=0.3781 dec=0.0157 | enc_lr=1.75e-05 head_lr=7.00e-04
+  epoch 4 | step   2650 | loss=0.4420 ret=0.4405 dec=0.0149 | enc_lr=1.65e-05 head_lr=6.60e-04
+  epoch 4 | step   2700 | loss=0.3792 ret=0.3776 dec=0.0164 | enc_lr=1.55e-05 head_lr=6.20e-04
+  epoch 4 | step   2750 | loss=0.3651 ret=0.3636 dec=0.0154 | enc_lr=1.45e-05 head_lr=5.80e-04
+  epoch 4 | step   2800 | loss=0.3978 ret=0.3962 dec=0.0166 | enc_lr=1.36e-05 head_lr=5.42e-04
+  epoch 4 | step   2850 | loss=0.4377 ret=0.4362 dec=0.0155 | enc_lr=1.26e-05 head_lr=5.04e-04
+  epoch 4 | step   2900 | loss=0.4271 ret=0.4255 dec=0.0167 | enc_lr=1.17e-05 head_lr=4.68e-04
+  epoch 4 | step   2950 | loss=0.3359 ret=0.3343 dec=0.0161 | enc_lr=1.08e-05 head_lr=4.32e-04
+  epoch 4 | step   3000 | loss=0.3793 ret=0.3778 dec=0.0157 | enc_lr=9.93e-06 head_lr=3.97e-04
+  epoch 4 | step   3050 | loss=0.3381 ret=0.3364 dec=0.0170 | enc_lr=9.09e-06 head_lr=3.64e-04
+  epoch 4 | step   3100 | loss=0.3792 ret=0.3775 dec=0.0172 | enc_lr=8.28e-06 head_lr=3.31e-04
+  epoch 4 | step   3150 | loss=0.4287 ret=0.4269 dec=0.0176 | enc_lr=7.50e-06 head_lr=3.00e-04
+  epoch 4 | step   3200 | loss=0.4115 ret=0.4098 dec=0.0172 | enc_lr=6.76e-06 head_lr=2.70e-04
+  epoch 4 | step   3250 | loss=0.3168 ret=0.3152 dec=0.0165 | enc_lr=6.04e-06 head_lr=2.42e-04
+Epoch 4/5 | loss=0.3920 ret=0.3904 dec=0.0162 | 1433s
+  saved /workspace/checkpoints/drt_scale2_epoch4.pt
+  epoch 5 | step   3300 | loss=0.3551 ret=0.3535 dec=0.0158 | enc_lr=5.36e-06 head_lr=2.15e-04
+  epoch 5 | step   3350 | loss=0.4191 ret=0.4175 dec=0.0161 | enc_lr=4.72e-06 head_lr=1.89e-04
+  epoch 5 | step   3400 | loss=0.4214 ret=0.4198 dec=0.0162 | enc_lr=4.11e-06 head_lr=1.65e-04
+  epoch 5 | step   3450 | loss=0.3116 ret=0.3099 dec=0.0166 | enc_lr=3.54e-06 head_lr=1.42e-04
+  epoch 5 | step   3500 | loss=0.3560 ret=0.3543 dec=0.0168 | enc_lr=3.02e-06 head_lr=1.21e-04
+  epoch 5 | step   3550 | loss=0.4007 ret=0.3989 dec=0.0172 | enc_lr=2.53e-06 head_lr=1.01e-04
+  epoch 5 | step   3600 | loss=0.3340 ret=0.3322 dec=0.0176 | enc_lr=2.08e-06 head_lr=8.31e-05
+  epoch 5 | step   3650 | loss=0.3191 ret=0.3174 dec=0.0171 | enc_lr=1.67e-06 head_lr=6.69e-05
+  epoch 5 | step   3700 | loss=0.3468 ret=0.3451 dec=0.0170 | enc_lr=1.31e-06 head_lr=5.24e-05
+  epoch 5 | step   3750 | loss=0.3436 ret=0.3420 dec=0.0167 | enc_lr=9.90e-07 head_lr=3.96e-05
+  epoch 5 | step   3800 | loss=0.3727 ret=0.3710 dec=0.0165 | enc_lr=7.14e-07 head_lr=2.86e-05
+  epoch 5 | step   3850 | loss=0.3871 ret=0.3854 dec=0.0170 | enc_lr=4.82e-07 head_lr=1.93e-05
+  epoch 5 | step   3900 | loss=0.3682 ret=0.3665 dec=0.0171 | enc_lr=2.96e-07 head_lr=1.18e-05
+  epoch 5 | step   3950 | loss=0.3680 ret=0.3663 dec=0.0170 | enc_lr=1.54e-07 head_lr=6.18e-06
+  epoch 5 | step   4000 | loss=0.3835 ret=0.3818 dec=0.0169 | enc_lr=5.85e-08 head_lr=2.34e-06
+  epoch 5 | step   4050 | loss=0.3983 ret=0.3965 dec=0.0177 | enc_lr=8.23e-09 head_lr=3.29e-07
+Epoch 5/5 | loss=0.3591 ret=0.3574 dec=0.0169 | 1429s
+  saved /workspace/checkpoints/drt_scale2_epoch5.pt

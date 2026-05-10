@@ -29,10 +29,15 @@ checkpoints/
 *.ckpt
 *.bin
 
-# Logs
+# Logs — exclude top-level logs/ and stray *.log files
 logs/
 *.log
 /tmp/
+# ... but DO track the saved Scale-2 + diagnostic logs in results/
+!results/
+!results/logs/
+!results/logs/*.log
+!results/logs/*.txt
 
 # HF / model cache (if anyone runs the pipeline locally)
 .cache/

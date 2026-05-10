@@ -1,0 +1,22 @@
+DRT checkpoint:      /workspace/checkpoints/drt_scale2_epoch5.pt
+Baseline checkpoint: /workspace/checkpoints/cosine_baseline_epoch5.pt
+
+{
+  "baseline": {
+    "MRR@10": 0.3277358780188293,
+    "nDCG@10": 0.3882536516752496,
+    "Recall@100": 0.8600286532951289
+  },
+  "drt": {
+    "MRR@10": 0.3073682744348933,
+    "nDCG@10": 0.36475399587923557,
+    "Recall@100": 0.8315186246418338
+  }
+}
+
+==========================================================
+Metric            Cosine BL          DRT            Δ
+----------------------------------------------------------
+MRR@10               0.3277       0.3074     -0.0204
+nDCG@10              0.3883       0.3648     -0.0235
+Recall@100           0.8600       0.8315     -0.0285

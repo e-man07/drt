@@ -1,0 +1,41 @@
+
+=== Per-query DRT vs cosine baseline ===
+  bl_mrr@10_mean           0.3278
+  drt_mrr@10_mean          0.3075
+  delta_mean               -0.0203
+  delta_median             0.0000
+  frac_drt_better          0.1404
+  frac_drt_worse           0.2086
+  frac_tie                 0.6510
+
+WINS group avg query length: 5.5 words
+LOSSES group avg query length: 6.3 words
+
+WIN labels: {'factoid=0': 41, 'has_entity=0': 97, 'length_bucket=0': 57, 'factoid=1': 59, 'length_bucket=2': 3, 'length_bucket=1': 40, 'has_entity=1': 3}
+LOSS labels: {'factoid=1': 79, 'has_entity=0': 95, 'length_bucket=1': 56, 'factoid=0': 21, 'length_bucket=0': 38, 'has_entity=1': 5, 'length_bucket=2': 6}
+
+=== 10 example WINS (DRT > BL) ===
+  Δ=+1.000  bl=0.00  drt=1.00  | node js import
+  Δ=+1.000  bl=0.00  drt=1.00  | what is the best place for all inclusive vacations for families
+  Δ=+1.000  bl=0.00  drt=1.00  | is physical therapy
+  Δ=+1.000  bl=0.00  drt=1.00  | what food helps to produce collagen
+  Δ=+1.000  bl=0.00  drt=1.00  | what are copper coated carbon rods used for
+  Δ=+0.889  bl=0.11  drt=1.00  | what is the best description of an adaptation
+  Δ=+0.889  bl=0.11  drt=1.00  | how can nitrogen be fixed
+  Δ=+0.875  bl=0.12  drt=1.00  | chemistry amu definition
+  Δ=+0.857  bl=0.14  drt=1.00  | what age do moles appear
+  Δ=+0.857  bl=0.14  drt=1.00  | how late can males receive hpv vaccine
+
+=== 10 example LOSSES (DRT < BL) ===
+  Δ=-1.000  bl=1.00  drt=0.00  | does law enforcement have the responsibility to intervene?
+  Δ=-1.000  bl=1.00  drt=0.00  | what's the temperature in tucson arizona right now?
+  Δ=-1.000  bl=1.00  drt=0.00  | the word said hello in swedish
+  Δ=-1.000  bl=1.00  drt=0.00  | dept of treasury careers
+  Δ=-1.000  bl=1.00  drt=0.00  | where is 89130
+  Δ=-1.000  bl=1.00  drt=0.00  | who is deputy director andrew mccabe
+  Δ=-1.000  bl=1.00  drt=0.00  | what internet security do you get with rcn
+  Δ=-1.000  bl=1.00  drt=0.00  | what carnival ships have havana
+  Δ=-1.000  bl=1.00  drt=0.00  | what is the color of steel coin?
+  Δ=-1.000  bl=1.00  drt=0.00  | what is the parent company for adidas
+
+Saved → /workspace/diagnostics/failures.json

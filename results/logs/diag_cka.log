@@ -1,0 +1,23 @@
+
+=== Linear CKA on dev queries (n=6,980) ===
+  baseline encoder  vs  DRT encoder (raw)        : 0.9452
+  baseline encoder  vs  DRT concat sub-vectors   : 0.8297
+  DRT raw encoder   vs  DRT concat sub-vectors   : 0.8359
+
+  per-slot vs baseline encoder:
+    slot_0: 0.5637
+    slot_1: 0.5629
+    slot_2: 0.5742
+    slot_3: 0.5678
+    slot_4: 0.5640
+    slot_5: 0.5740
+
+  per-slot vs DRT raw encoder:
+    slot_0: 0.5683
+    slot_1: 0.5692
+    slot_2: 0.5770
+    slot_3: 0.5720
+    slot_4: 0.5706
+    slot_5: 0.5748
+
+Saved → /workspace/diagnostics/cka.json
