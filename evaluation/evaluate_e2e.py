@@ -69,25 +69,37 @@ def _encode_corpus_baseline(
     encoder: MiniLMEncoder,
     corpus: list[tuple[str, str]],
     device: str,
-    chunk_size: int = 256,
+    chunk_size: int = 4096,
     fp16: bool = True,
 ) -> tuple[torch.Tensor, list[str]]:
+    import time as _time
     encoder.eval()
     pids = [pid for pid, _ in corpus]
     texts = [t for _, t in corpus]
+    n = len(texts)
     all_emb = torch.empty(
-        (len(texts), encoder.embed_dim),
+        (n, encoder.embed_dim),
         dtype=torch.float16 if fp16 else torch.float32,
         device="cpu",
     )
+    t0 = _time.time()
     with torch.no_grad():
-        for s in range(0, len(texts), chunk_size):
-            e = min(s + chunk_size, len(texts))
+        for s in range(0, n, chunk_size):
+            e = min(s + chunk_size, n)
             tok = encoder.tokenize(texts[s:e])
-            tok = {k: v.to(device) for k, v in tok.items()}
+            tok = {k: v.to(device, non_blocking=True) for k, v in tok.items()}
             with torch.cuda.amp.autocast(enabled=fp16 and device == "cuda", dtype=torch.float16):
                 emb = encoder(tok["input_ids"], tok["attention_mask"])
             all_emb[s:e] = emb.detach().to(dtype=all_emb.dtype, device="cpu")
+            elapsed = _time.time() - t0
+            rate = e / elapsed if elapsed > 0 else 0.0
+            eta = (n - e) / rate if rate > 0 else float("inf")
+            print(
+                f"  baseline corpus {e:>9,}/{n:,} "
+                f"({100*e/n:5.1f}%) | {elapsed:6.0f}s | "
+                f"{rate:>5.0f} rows/s | ETA {eta:5.0f}s",
+                flush=True,
+            )
     return all_emb, pids
 
 
@@ -95,23 +107,35 @@ def _encode_corpus_drt(
     model: DRTModel,
     corpus: list[tuple[str, str]],
     device: str,
-    chunk_size: int = 256,
+    chunk_size: int = 4096,
     fp16: bool = True,
 ) -> tuple[torch.Tensor, list[str]]:
+    import time as _time
     model.eval()
     pids = [pid for pid, _ in corpus]
     texts = [t for _, t in corpus]
+    n = len(texts)
     all_subs = torch.empty(
-        (len(texts), model.k, model.sub_dim),
+        (n, model.k, model.sub_dim),
         dtype=torch.float16 if fp16 else torch.float32,
         device="cpu",
     )
+    t0 = _time.time()
     with torch.no_grad():
-        for s in range(0, len(texts), chunk_size):
-            e = min(s + chunk_size, len(texts))
+        for s in range(0, n, chunk_size):
+            e = min(s + chunk_size, n)
             with torch.cuda.amp.autocast(enabled=fp16 and device == "cuda", dtype=torch.float16):
                 subs = model.encode_doc(texts[s:e], device)
             all_subs[s:e] = subs.detach().to(dtype=all_subs.dtype, device="cpu")
+            elapsed = _time.time() - t0
+            rate = e / elapsed if elapsed > 0 else 0.0
+            eta = (n - e) / rate if rate > 0 else float("inf")
+            print(
+                f"  drt corpus      {e:>9,}/{n:,} "
+                f"({100*e/n:5.1f}%) | {elapsed:6.0f}s | "
+                f"{rate:>5.0f} rows/s | ETA {eta:5.0f}s",
+                flush=True,
+            )
     return all_subs, pids
 
 
