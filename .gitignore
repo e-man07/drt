@@ -46,6 +46,8 @@ plans/
 # Akash deploy secrets — only the example is checked in
 deploy/.env
 !deploy/.env.example
+deploy/*.local.sdl.yml
+deploy/*.local.yml
 
 # Editor / OS
 *.swp
