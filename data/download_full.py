@@ -29,8 +29,11 @@ from pathlib import Path
 from datasets import load_dataset
 
 
+# MS MARCO BM25 hard negatives. The "small" tarball is no longer hosted; the
+# z22 mirror still serves the gzipped full set (~270M triples), which our
+# loader caps at 7 negatives per (qid, pos) pair so most rows are discarded.
 HARD_NEGATIVES_URL = (
-    "https://msmarco.z22.web.core.windows.net/msmarcoranking/qidpidtriples.train.small.tar.gz"
+    "https://msmarco.z22.web.core.windows.net/msmarcoranking/qidpidtriples.train.full.2.tsv.gz"
 )
 
 
@@ -88,28 +91,31 @@ def write_corpus(corpus_dataset, out_path: Path) -> int:
 
 
 def download_hard_negatives(out_path: Path) -> int:
-    """Download and extract qidpidtriples.train.small.tsv from MS MARCO mirror.
+    """Download qidpidtriples.train.full.2.tsv.gz and decompress to out_path.
 
-    The file ships as a tarball containing a single TSV. We stream-download it
-    and write the TSV to out_path. Returns the number of rows.
+    The MS MARCO mirror serves gzipped TSV (qid\\tpos_pid\\tneg_pid). We stream
+    decompress to disk so we never hold the full ~8 GB uncompressed file in
+    memory. Returns the number of rows written.
     """
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_tar = out_path.with_suffix(".tar.gz")
-    print(f"Downloading {HARD_NEGATIVES_URL} → {tmp_tar}")
-    with urllib.request.urlopen(HARD_NEGATIVES_URL) as resp, open(tmp_tar, "wb") as out:
-        shutil.copyfileobj(resp, out, length=1024 * 1024)
-    print(f"Extracting {tmp_tar}")
-    import tarfile
+    import gzip
 
-    with tarfile.open(tmp_tar, "r:gz") as tar:
-        members = [m for m in tar.getmembers() if m.isfile()]
-        if not members:
-            raise RuntimeError("Empty tarball from MS MARCO mirror.")
-        member = members[0]
-        with tar.extractfile(member) as src, open(out_path, "wb") as dst:
-            shutil.copyfileobj(src, dst, length=1024 * 1024)
-    tmp_tar.unlink()
-    n = sum(1 for _ in open(out_path, "rb"))
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_gz = out_path.with_suffix(".tsv.gz")
+    print(f"Downloading {HARD_NEGATIVES_URL}")
+    print(f"  -> {tmp_gz}")
+    with urllib.request.urlopen(HARD_NEGATIVES_URL) as resp, open(tmp_gz, "wb") as out:
+        shutil.copyfileobj(resp, out, length=1024 * 1024)
+
+    print(f"Decompressing -> {out_path}")
+    n = 0
+    with gzip.open(tmp_gz, "rb") as src, open(out_path, "wb") as dst:
+        while True:
+            chunk = src.read(1024 * 1024)
+            if not chunk:
+                break
+            dst.write(chunk)
+            n += chunk.count(b"\n")
+    tmp_gz.unlink()
     return n
 
 
