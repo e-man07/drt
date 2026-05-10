@@ -492,7 +492,16 @@ _FACTOID_RE = re.compile(
     r"^\s*(what|who|whom|when|where|why|how|which|did|do|does|is|are|was|were|can|could|should)\b",
     flags=re.IGNORECASE,
 )
-_ENTITY_RE = re.compile(r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,})\b")
+# MS MARCO queries are lowercased so capitalized-word entity detection
+# doesn't work. Use a proxy: queries with named-entity-like tokens —
+# 4-digit years, dollar amounts, or specific entity-evoking patterns.
+_ENTITY_PROXY_RE = re.compile(
+    r"\b(\d{4}|\d+(\.\d+)?\s*(percent|million|billion)|"
+    r"president|company|university|state|country|city|"
+    r"american|english|chinese|french|german|"
+    r"[a-z]+ ?[a-z]* (corporation|inc|llc|university|college|hospital))\b",
+    flags=re.IGNORECASE,
+)
 
 
 def _label_query(text: str) -> dict:
@@ -500,7 +509,7 @@ def _label_query(text: str) -> dict:
     n_words = len(words)
     return {
         "factoid": int(bool(_FACTOID_RE.search(text))),
-        "has_entity": int(bool(_ENTITY_RE.search(text))),
+        "has_entity": int(bool(_ENTITY_PROXY_RE.search(text))),
         "length_bucket": 0 if n_words <= 5 else (1 if n_words <= 10 else 2),
     }
 
@@ -540,7 +549,7 @@ def cmd_probes(args: argparse.Namespace) -> None:
         X = drt_qs[:, slot, :].astype(np.float32)
         for task, y in labels.items():
             X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, random_state=42, stratify=y)
-            clf = LogisticRegression(max_iter=2000, multi_class="auto").fit(X_tr, y_tr)
+            clf = LogisticRegression(max_iter=2000).fit(X_tr, y_tr)
             acc = accuracy_score(y_te, clf.predict(X_te))
             # Majority-class baseline
             maj = max(np.bincount(y_te) / len(y_te))
