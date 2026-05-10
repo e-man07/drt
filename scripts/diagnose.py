@@ -560,7 +560,7 @@ def cmd_probes(args: argparse.Namespace) -> None:
     X_concat = drt_qs.reshape(drt_qs.shape[0], -1).astype(np.float32)
     for task, y in labels.items():
         X_tr, X_te, y_tr, y_te = train_test_split(X_concat, y, test_size=0.3, random_state=42, stratify=y)
-        clf = LogisticRegression(max_iter=2000, multi_class="auto").fit(X_tr, y_tr)
+        clf = LogisticRegression(max_iter=2000).fit(X_tr, y_tr)
         acc = accuracy_score(y_te, clf.predict(X_te))
         maj = max(np.bincount(y_te) / len(y_te))
         results["concat_baseline"][task] = {"acc": float(acc), "majority": float(maj)}
