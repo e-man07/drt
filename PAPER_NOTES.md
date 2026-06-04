@@ -30,7 +30,7 @@ The diagnostic methodology itself — modified scoring inference, per-slot probe
 
 ### 1.1 The cosine-similarity ceiling
 
-Modern dense retrieval encodes text into a single dense vector and ranks by cosine similarity. The blueprint that motivated this work identified four fundamental limitations:
+Modern dense retrieval encodes text into a single dense vector and ranks by cosine similarity. Our original research design identified four fundamental limitations:
 
 1. **Single scalar collapse.** Cosine reduces topical overlap, entity alignment, intent match, temporal relevance, and specificity into one number in `[-1, 1]`.
 2. **Forced symmetry.** `sim(q, d) = sim(d, q)`, yet relevance is directional.
@@ -240,7 +240,7 @@ Removing both regularizers barely changes the result. The architecture's failure
 
 The frozen-encoder ceiling. MiniLM was contrastively trained to put similar texts close together under cosine similarity. A 419 K-parameter head sitting on top of those embeddings cannot improve on cosine — at best it can match it. With 5,951 training pairs, the head doesn't have enough signal to even match, and ends up adding noise.
 
-Scale 1 is therefore inconclusive about DRT's intrinsic value. The blueprint anticipated this: *Scale 1 verifies the architecture and code path work; Scale 2 — unfreezing the encoder — is the real test.*
+Scale 1 is therefore inconclusive about DRT's intrinsic value. This was anticipated in the design: *Scale 1 verifies the architecture and code path work; Scale 2 — unfreezing the encoder — is the real test.*
 
 ---
 
@@ -254,7 +254,7 @@ Scale 1 is therefore inconclusive about DRT's intrinsic value. The blueprint ant
 - Pipeline: download → train cosine baseline → train DRT → evaluate.
 - Wall-clock per training (each model): **~119 min** for 5 epochs at ~1,430 s/epoch (816 optimizer steps/epoch, batch 512).
 
-The cosine baseline trains the *same MiniLM encoder* from the *same starting weights* on the *same hard-negative training data* for the *same epoch count*, using only InfoNCE over plain `cos(q, d)` (no decomposition, no attention head, no decorrelation, no slot dropout). It is the fair comparison target the blueprint specified.
+The cosine baseline trains the *same MiniLM encoder* from the *same starting weights* on the *same hard-negative training data* for the *same epoch count*, using only InfoNCE over plain `cos(q, d)` (no decomposition, no attention head, no decorrelation, no slot dropout). It is the fair comparison target the experimental design specified.
 
 Encoded corpus (for both eval and diagnostics) lives on `/workspace/` as `baseline_corpus_emb.npy` (8.84 M × 384 fp16 = 6.4 GB) and `drt_corpus_subs.npy` (8.84 M × 6 × 64 fp16 = 6.4 GB).
 
@@ -302,7 +302,7 @@ The cosine number (0.3278) is consistent with published MS MARCO numbers for a c
 
 ### 4.4 Conclusion
 
-The blueprint's success criterion was Δ MRR@10 ≥ **+0.02** for DRT. We got **−0.02**. DRT lost by exactly the same magnitude the criterion required for success.
+The pre-registered success criterion was Δ MRR@10 ≥ **+0.02** for DRT. We got **−0.02**. DRT lost by exactly the same magnitude the criterion required for success.
 
 Unfreezing the encoder narrowed the gap considerably (from −7% in Scale 1 to −2% in Scale 2), confirming that the frozen-encoder ceiling was real. But end-to-end training did not flip the sign.
 
@@ -834,7 +834,7 @@ Skipped (regeneratable from checkpoints by re-running `scripts.diagnose encode` 
 
 ### Appendix G — References (direct precursors)
 
-These should be cited in any paper writeup. Bibliographic details are in the blueprint's reference section.
+These should be cited in any paper writeup.
 
 - Khattab & Zaharia, 2020 — *ColBERT: Efficient and Effective Passage Search via Contextualized Late Interaction over BERT.*
 - Humeau et al., 2020 — *Poly-encoders.*
@@ -850,4 +850,4 @@ These should be cited in any paper writeup. Bibliographic details are in the blu
 
 ---
 
-*End of `PAPER_NOTES.md`. Total length: ~580 lines / ~38 KB. Source files: `results/diagnostics/*.json`, `results/logs/*`, `DRT_Research_Blueprint.html`, `DRT_Scale2_Prompt.md`, and the code in this repository at commit `768389f`.*
+*End of `PAPER_NOTES.md`. Source artifacts: `results/diagnostics/*.json`, `results/logs/*`, and the code in this repository.*

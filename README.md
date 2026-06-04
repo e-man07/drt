@@ -82,8 +82,6 @@ drt/
 ├── README.md                   ← you are here
 ├── PAPER_NOTES.md              ← paper-ready writeup (≈600 lines, all numbers cited)
 ├── DRT_architecture.excalidraw ← single-page diagram of the full arc
-├── DRT_Research_Blueprint.html ← the original research design (motivating doc)
-├── DRT_Scale2_Prompt.md        ← the Scale-2 spec
 │
 ├── models/        ← MiniLM encoder, DecompositionHead, QueryAttentionHead, DRTModel
 ├── losses/        ← InfoNCE, Barlow-Twins-style decorrelation, slot dropout
@@ -412,7 +410,7 @@ If this work informs your research, please cite the accompanying article and thi
 - Kornblith et al., 2019 — *Similarity of Neural Network Representations Revisited (CKA).*
 - Locatello et al., 2019 — *Challenging Common Assumptions in the Unsupervised Learning of Disentangled Representations.*
 
-Full bibliographic entries are in [`DRT_Research_Blueprint.html`](./DRT_Research_Blueprint.html).
+Full bibliographic entries — see [`PAPER_NOTES.md` Appendix G](./PAPER_NOTES.md).
 
 ---
 
