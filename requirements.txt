@@ -1,0 +1,13 @@
+# Core
+torch>=2.5
+transformers>=4.40
+sentence-transformers>=3.0
+datasets>=2.18
+numpy>=1.24
+
+# Training utilities
+pyyaml>=6.0
+tqdm>=4.66
+
+# Diagnostics
+scikit-learn>=1.3

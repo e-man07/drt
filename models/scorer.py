@@ -1,6 +1,6 @@
 """DRTScorer: end-to-end module wrapping decomposition + query attention.
 
-score(q, d) = Σᵢ αᵢ(q) · cos(qᵢ, dᵢ)
+score(q, d) = Σᵢ αᵢ(q) · cos(qᵢ, dᵢ) 
 
 Sub-vectors are L2-normalized inside DecompositionHead, so cos reduces to a
 dot product. The same DecompositionHead is shared by query and document; only
